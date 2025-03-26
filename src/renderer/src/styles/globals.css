@@ -118,6 +118,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    /* Apply Tailwind utilities for background, text, default cursor, and disabling text selection */
+    @apply bg-background text-foreground cursor-default select-none;
   }
 }
