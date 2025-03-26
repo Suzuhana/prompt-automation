@@ -25,19 +25,26 @@ export const FileSystemService = {
     const stats = fs.statSync(dirPath)
 
     if (stats.isFile()) {
-      return {
-        name,
-        path: dirPath,
-        type: 'file'
-      }
+      return { name, path: dirPath, type: 'file' }
     }
 
-    const children: FileNode[] = fs
-      .readdirSync(dirPath)
-      .map((child) => {
-        const childPath = path.join(dirPath, child)
+    // Use readdirSync with { withFileTypes: true } to get file type info without extra stat calls
+    const dirents = fs.readdirSync(dirPath, { withFileTypes: true })
+    const children: FileNode[] = dirents
+      .map((dirent) => {
+        const childPath = path.join(dirPath, dirent.name)
         try {
-          return FileSystemService.getDirectoryStructure(childPath)
+          if (dirent.isDirectory()) {
+            return FileSystemService.getDirectoryStructure(childPath)
+          } else if (dirent.isFile()) {
+            return { name: dirent.name, path: childPath, type: 'file' }
+          } else {
+            // Fallback for other types:
+            const childStats = fs.statSync(childPath)
+            return childStats.isDirectory()
+              ? FileSystemService.getDirectoryStructure(childPath)
+              : { name: dirent.name, path: childPath, type: 'file' }
+          }
         } catch (error) {
           console.error(`Error reading ${childPath}:`, error)
           return null
@@ -45,11 +52,6 @@ export const FileSystemService = {
       })
       .filter(Boolean) as FileNode[]
 
-    return {
-      name,
-      path: dirPath,
-      type: 'directory',
-      children
-    }
+    return { name, path: dirPath, type: 'directory', children }
   }
 }
