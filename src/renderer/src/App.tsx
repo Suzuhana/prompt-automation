@@ -1,33 +1,18 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import { FileDialog } from './features/file-explorer/components/FileDialog'
 
 function App(): JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
 
   return (
     <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
-      </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <div className="actions">
-        <div className="action">
-          <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-            Documentation
-          </a>
-        </div>
-        <div className="action">
-          <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-            Send IPC
-          </a>
+      <div>
+        <div className="container mx-auto py-8">
+          <h1 className="text-2xl font-bold mb-6">File Explorer</h1>
+          <div className="bg-white rounded-lg shadow p-6">
+            <FileDialog />
+          </div>
         </div>
       </div>
-      <Versions></Versions>
     </>
   )
 }
