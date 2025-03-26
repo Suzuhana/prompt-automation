@@ -7,12 +7,18 @@ export function FileDialog() {
   const { fileStructure, selectedFiles, isLoading, openFileDialog, setSelectedFiles } =
     useFileDialog()
 
-  // Handle file/directory selection/deselection
-  const handleSelectionChange = (path: string, selected: boolean) => {
-    setSelectedFiles((prev: SelectedFiles) => ({
-      ...prev,
-      [path]: selected
-    }))
+  /**
+   * Handle multiple path selections in one update.
+   * This avoids repeated state updates when selecting or deselecting large directories.
+   */
+  const handleBulkSelectionChange = (paths: string[], selected: boolean) => {
+    setSelectedFiles((prev: SelectedFiles) => {
+      const updated = { ...prev }
+      paths.forEach((p) => {
+        updated[p] = selected
+      })
+      return updated
+    })
   }
 
   // Get count of selected files/directories
@@ -49,7 +55,7 @@ export function FileDialog() {
             <FileTree
               node={fileStructure}
               selectedFiles={selectedFiles}
-              onSelectionChange={handleSelectionChange}
+              onBulkSelectionChange={handleBulkSelectionChange}
               level={0}
             />
           </div>

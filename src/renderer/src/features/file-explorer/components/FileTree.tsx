@@ -6,13 +6,35 @@ import { FileNode, SelectedFiles } from '@/types/file'
 interface FileTreeProps {
   node: FileNode
   selectedFiles: SelectedFiles
-  onSelectionChange: (path: string, selected: boolean) => void
+  /**
+   * Updated prop to handle bulk selection of paths.
+   * @param paths Array of file/directory paths to select or deselect
+   * @param selected Whether to select or deselect all given paths
+   */
+  onBulkSelectionChange: (paths: string[], selected: boolean) => void
   level: number
 }
 
-export function FileTree({ node, selectedFiles, onSelectionChange, level }: FileTreeProps) {
-  const [expanded, setExpanded] = useState(level < 2) // Auto-expand first two levels
+/**
+ * Recursively gather all paths under a node (including its own).
+ * This helps us toggle entire directory trees in a single state update.
+ */
+function gatherAllPaths(node: FileNode): string[] {
+  const paths: string[] = []
 
+  function recurse(n: FileNode) {
+    paths.push(n.path)
+    if (n.type === 'directory' && n.children) {
+      n.children.forEach(recurse)
+    }
+  }
+
+  recurse(node)
+  return paths
+}
+
+export function FileTree({ node, selectedFiles, onBulkSelectionChange, level }: FileTreeProps) {
+  const [expanded, setExpanded] = useState(level < 2) // Auto-expand first two levels
   const isSelected = selectedFiles[node.path] || false
 
   // Toggle expansion state for directories
@@ -23,25 +45,13 @@ export function FileTree({ node, selectedFiles, onSelectionChange, level }: File
     }
   }
 
-  // Handle checkbox change
+  // Handle checkbox change in a single call
   const handleCheckboxChange = (checked: boolean) => {
-    onSelectionChange(node.path, checked)
-
-    // If it's a directory, propagate selection to all children
-    if (node.type === 'directory' && node.children) {
-      propagateSelection(node, checked)
-    }
-  }
-
-  // Propagate selection to all children
-  const propagateSelection = (current: FileNode, selected: boolean) => {
-    if (current.children) {
-      current.children.forEach((child) => {
-        onSelectionChange(child.path, selected)
-        if (child.type === 'directory') {
-          propagateSelection(child, selected)
-        }
-      })
+    if (node.type === 'directory') {
+      const allPaths = gatherAllPaths(node)
+      onBulkSelectionChange(allPaths, checked)
+    } else {
+      onBulkSelectionChange([node.path], checked)
     }
   }
 
@@ -63,7 +73,7 @@ export function FileTree({ node, selectedFiles, onSelectionChange, level }: File
               {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </span>
           ) : (
-            <span className="mr-1 w-4"></span> // Empty space for alignment
+            <span className="mr-1 w-4" />
           )}
 
           <Checkbox
@@ -91,7 +101,7 @@ export function FileTree({ node, selectedFiles, onSelectionChange, level }: File
               key={`${child.path}-${index}`}
               node={child}
               selectedFiles={selectedFiles}
-              onSelectionChange={onSelectionChange}
+              onBulkSelectionChange={onBulkSelectionChange}
               level={level + 1}
             />
           ))}
