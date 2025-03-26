@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { FileTree } from './FileTree'
+import { FileTree } from './FileTree' // Ensure correct import if path changed
 import type { SelectedFiles } from '@/types/file'
 import { useFileDialog } from '../hook/useFileDialog'
 
@@ -13,6 +13,7 @@ export function FileDialog() {
    */
   const handleBulkSelectionChange = (paths: string[], selected: boolean) => {
     setSelectedFiles((prev: SelectedFiles) => {
+      // Create a mutable copy for efficient updates
       const updated = { ...prev }
       paths.forEach((p) => {
         updated[p] = selected
@@ -37,6 +38,7 @@ export function FileDialog() {
 
       {isLoading && (
         <div className="flex justify-center items-center h-20">
+          {/* Consider using a spinner component here */}
           <p>Loading...</p>
         </div>
       )}
@@ -51,20 +53,30 @@ export function FileDialog() {
               {selectedCount} item{selectedCount !== 1 ? 's' : ''} selected
             </p>
           </div>
-          <div className="border rounded-md p-4 max-h-[60vh] overflow-auto">
+          <div className="border rounded-md p-4 max-h-[60vh] overflow-auto bg-gray-50/30 dark:bg-gray-800/20">
+            {/* Removed level prop, FileTree now defaults to 0 */}
             <FileTree
               node={fileStructure}
               selectedFiles={selectedFiles}
               onBulkSelectionChange={handleBulkSelectionChange}
-              level={0}
             />
           </div>
         </div>
       )}
 
+      {/* Action button section */}
       {fileStructure && !isLoading && selectedCount > 0 && (
-        <div className="mt-4">
-          <Button onClick={() => console.log('Selected files:', selectedFiles)}>
+        <div className="mt-6 flex justify-end">
+          <Button
+            onClick={() => {
+              // Example action: Log selected file paths
+              const selectedPaths = Object.entries(selectedFiles)
+                .filter(([, isSelected]) => isSelected)
+                .map(([path]) => path)
+              console.log('Processing selected paths:', selectedPaths)
+              // Add your actual processing logic here
+            }}
+          >
             Process Selected ({selectedCount})
           </Button>
         </div>
