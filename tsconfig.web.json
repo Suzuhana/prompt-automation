@@ -10,7 +10,7 @@
   ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "typeRoots": ["./node_modules/@types", "./src/renderer/types"],
+    "typeRoots": ["./node_modules/@types"],
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
