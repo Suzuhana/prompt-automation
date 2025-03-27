@@ -36,6 +36,7 @@
     "lucide-react": "^0.483.0",
     "react-complex-tree": "^2.6.0",
     "react-devtools": "^6.1.1",
+    "react-resizable-panels": "^2.1.7",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.0.15",
     "tw-animate-css": "^1.2.4"
