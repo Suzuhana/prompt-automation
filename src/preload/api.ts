@@ -23,12 +23,3 @@ export const fileSystemAPI = {
     return ipcRenderer.invoke('get-directory-structure', dirPath)
   }
 }
-
-// Add TypeScript declarations
-declare global {
-  interface Window {
-    api: {
-      fileSystem: typeof fileSystemAPI
-    }
-  }
-}
