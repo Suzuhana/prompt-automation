@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { FileNode } from 'src/common/types/file'
+import { isBinaryFileSync } from 'isbinaryfile'
 
 /**
  * A simple service to fetch filesystem details
@@ -16,7 +17,7 @@ export const FileSystemService = {
     const stats = fs.statSync(dirPath)
 
     if (stats.isFile()) {
-      return { name, path: dirPath, type: 'file' }
+      return { name, path: dirPath, type: 'file', isBinary: isBinaryFileSync(dirPath) }
     }
 
     // Use readdirSync with { withFileTypes: true } to get file type info without extra stat calls
@@ -28,13 +29,23 @@ export const FileSystemService = {
           if (dirent.isDirectory()) {
             return FileSystemService.getDirectoryStructure(childPath)
           } else if (dirent.isFile()) {
-            return { name: dirent.name, path: childPath, type: 'file' }
+            return {
+              name: dirent.name,
+              path: childPath,
+              type: 'file',
+              isBinary: isBinaryFileSync(childPath)
+            }
           } else {
             // Fallback for other types:
             const childStats = fs.statSync(childPath)
             return childStats.isDirectory()
               ? FileSystemService.getDirectoryStructure(childPath)
-              : { name: dirent.name, path: childPath, type: 'file' }
+              : {
+                  name: dirent.name,
+                  path: childPath,
+                  type: 'file',
+                  isBinary: isBinaryFileSync(childPath)
+                }
           }
         } catch (error) {
           console.error(`Error reading ${childPath}:`, error)

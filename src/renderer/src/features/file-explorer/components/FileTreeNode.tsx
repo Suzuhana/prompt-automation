@@ -3,6 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ExpansionIndicator } from './ExpansionIndicator'
 import { FileTypeIcon } from './FileTypeIcon'
 import { FileNode } from 'src/common/types/file'
+import { Badge } from '@renderer/components/ui/badge'
 
 interface FileTreeNodeProps {
   node: FileNode
@@ -69,6 +70,12 @@ export function FileTreeNode({
       <FileTypeIcon type={node.type} />
 
       <span className="text-sm truncate group-hover:text-clip">{node.name}</span>
+
+      {node.type === 'file' && node.isBinary && (
+        <Badge variant="secondary" className="ml-2 text-xs">
+          Binary
+        </Badge>
+      )}
     </div>
   )
 }
