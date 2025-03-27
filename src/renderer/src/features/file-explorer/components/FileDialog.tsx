@@ -31,9 +31,6 @@ export function FileDialog() {
     <div className="flex flex-col h-full w-full p-4 gap-4">
       {/* Buttons section - stays at the top */}
       <div className="flex space-x-4">
-        <Button onClick={() => openFileDialog('file')} disabled={isLoading} variant="outline">
-          Select File
-        </Button>
         <Button onClick={() => openFileDialog('directory')} disabled={isLoading} variant="default">
           Select Directory
         </Button>

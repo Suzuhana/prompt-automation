@@ -9,7 +9,6 @@ export function useFileDialog() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   async function openFileDialog(dialogType: 'file' | 'directory') {
-    setIsLoading(true)
     try {
       const properties: OpenDialogOptions['properties'] =
         dialogType === 'file' ? ['openFile'] : ['openDirectory']
@@ -21,6 +20,7 @@ export function useFileDialog() {
       })
 
       if (filePath) {
+        setIsLoading(true)
         const structure = await window.api.fileSystem.getDirectoryStructure(filePath)
         setFileStructure(structure)
         setSelectedFiles({})

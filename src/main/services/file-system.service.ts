@@ -1,56 +1,55 @@
-import * as fs from 'fs'
 import * as path from 'path'
+import { promises as fs } from 'fs'
+import { isBinaryFile } from 'isbinaryfile' // Use the async version
 import { FileNode } from 'src/common/types/file'
-import { isBinaryFileSync } from 'isbinaryfile'
 
 export const FileSystemService = {
   /**
-   * Recursively get the structure of a directory or file.
+   * Recursively get the structure of a directory or file (asynchronously).
    * @param dirPath Path to the directory or file
    * @returns FileNode structure representing the directory/file tree
    */
-  getDirectoryStructure(dirPath: string): FileNode {
+  async getDirectoryStructure(dirPath: string): Promise<FileNode> {
     const name = path.basename(dirPath)
-    const stats = fs.statSync(dirPath)
+    const stats = await fs.stat(dirPath)
 
     // If it's a file, return immediately
     if (stats.isFile()) {
+      const binary = await isBinaryFile(dirPath)
       return {
         name,
         path: dirPath,
         type: 'file',
-        isBinary: isBinaryFileSync(dirPath)
+        isBinary: binary
       }
     }
 
-    // Use readdirSync with { withFileTypes: true } to iterate without extra stat calls
-    const dirents = fs.readdirSync(dirPath, { withFileTypes: true })
-    const children: FileNode[] = dirents
-      .map((dirent) => {
-        const childPath = path.join(dirPath, dirent.name)
+    // If it's a directory, read entries asynchronously
+    const dirents = await fs.readdir(dirPath, { withFileTypes: true })
+    const children: FileNode[] = []
 
-        try {
-          if (dirent.isDirectory()) {
-            // Recursively process directories
-            return FileSystemService.getDirectoryStructure(childPath)
-          } else if (dirent.isFile()) {
-            // Directly handle files
-            return {
-              name: dirent.name,
-              path: childPath,
-              type: 'file',
-              isBinary: isBinaryFileSync(childPath)
-            }
-          } else {
-            // For other types (e.g., symlinks, sockets, etc.), skip or handle as needed:
-            return null
-          }
-        } catch (error) {
-          console.error(`Error reading ${childPath}:`, error)
-          return null
+    for (const dirent of dirents) {
+      const childPath = path.join(dirPath, dirent.name)
+      try {
+        if (dirent.isDirectory()) {
+          // Recursively process directories
+          const childNode = await FileSystemService.getDirectoryStructure(childPath)
+          children.push(childNode)
+        } else if (dirent.isFile()) {
+          // Directly handle files
+          const binary = await isBinaryFile(childPath)
+          children.push({
+            name: dirent.name,
+            path: childPath,
+            type: 'file',
+            isBinary: binary
+          })
         }
-      })
-      .filter(Boolean) as FileNode[]
+        // For other types (e.g., symlinks, sockets, etc.), skip or handle as needed
+      } catch (error) {
+        console.error(`Error reading ${childPath}:`, error)
+      }
+    }
 
     return {
       name,

@@ -19,10 +19,10 @@ export function initFileSystemIPC(): void {
     }
   })
 
-  // Handler for getting directory structure
+  // Handler for getting directory structure (now awaited)
   ipcMain.handle('get-directory-structure', async (_event, dirPath) => {
     try {
-      return FileSystemService.getDirectoryStructure(dirPath)
+      return await FileSystemService.getDirectoryStructure(dirPath)
     } catch (error) {
       console.error('Error in get-directory-structure handler:', error)
       throw error
