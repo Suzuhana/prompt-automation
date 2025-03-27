@@ -1,15 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
-
-/**
- * Interface representing a file or directory node in the tree structure
- */
-export interface FileNode {
-  name: string
-  path: string
-  type: 'file' | 'directory'
-  children?: FileNode[]
-}
+import { FileNode } from 'src/common/types/file'
 
 /**
  * A simple service to fetch filesystem details

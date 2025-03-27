@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
-import type { FileNode, SelectedFiles } from '@/types/file'
+import type { SelectedFiles } from '@/types/file'
 import { FileTreeNode } from './FileTreeNode'
+import { FileNode } from 'src/common/types/file'
 
 interface FileTreeProps {
   node: FileNode

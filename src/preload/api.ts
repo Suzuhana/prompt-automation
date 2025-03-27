@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron'
+import { FileNode } from 'src/common/types/file'
 
 /**
  * File system APIs for the renderer process
@@ -18,8 +19,7 @@ export const fileSystemAPI = {
    * @param dirPath Path to the directory or file
    * @returns Promise resolving to the directory structure
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getDirectoryStructure: (dirPath: string): Promise<any> => {
+  getDirectoryStructure: (dirPath: string): Promise<FileNode> => {
     return ipcRenderer.invoke('get-directory-structure', dirPath)
   }
 }

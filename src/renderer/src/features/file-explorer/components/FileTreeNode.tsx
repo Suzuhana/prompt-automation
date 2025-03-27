@@ -1,8 +1,8 @@
 import React from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
-import type { FileNode } from '@/types/file'
 import { ExpansionIndicator } from './ExpansionIndicator'
 import { FileTypeIcon } from './FileTypeIcon'
+import { FileNode } from 'src/common/types/file'
 
 interface FileTreeNodeProps {
   node: FileNode

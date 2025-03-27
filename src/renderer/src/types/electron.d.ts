@@ -1,4 +1,4 @@
-import { FileNode } from './file'
+import { FileNode } from 'src/common/types/file'
 
 /**
  * Extension for the Electron API

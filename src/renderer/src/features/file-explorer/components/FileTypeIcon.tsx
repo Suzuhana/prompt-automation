@@ -1,5 +1,5 @@
 import { File, Folder } from 'lucide-react'
-import type { FileNode } from '@/types/file'
+import { FileNode } from 'src/common/types/file'
 
 interface FileTypeIconProps {
   type: FileNode['type']
