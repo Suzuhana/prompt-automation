@@ -1,5 +1,5 @@
 import { FileNode } from 'src/common/types/file-tree-types'
-import { WatcherEvent } from './file-watcher-types'
+import { DirectoryChangedData } from './file-watcher-types'
 
 /**
  * Extension for the Electron API
@@ -19,12 +19,9 @@ declare global {
         getDirectoryStructure: (dirPath: string) => Promise<FileNode>
         watchDirectory: (directory: string) => Promise<string>
         stopWatchDirectory: (watchId: string) => Promise<boolean>
-        onDirectoryChanged: (
-          callback: (data: { watchId: string; events: WatcherEvent[] }) => void
-        ) => void
+        subscriptToDirectoryChanged: (callback: (data: DirectoryChangedData) => void) => void
+        cancelSubDirectoryChanged: () => void
       }
     }
   }
 }
-
-export {}

@@ -2,11 +2,14 @@ import { useState } from 'react'
 import type { SelectedFiles } from '@/types/file'
 import { OpenDialogOptions } from 'electron'
 import { FileNode } from 'src/common/types/file-tree-types'
+import { useFileWatcher } from '@renderer/features/file-watcher/hook/useFileWatcher'
 
 export function useFileDialog() {
   const [fileStructure, setFileStructure] = useState<FileNode | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<SelectedFiles>({})
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [watchId, setWatchId] = useState<string | null>(null)
+  const { watchDirectory, stopWatchDirectory } = useFileWatcher()
 
   async function openFileDialog(dialogType: 'file' | 'directory') {
     try {
@@ -21,7 +24,14 @@ export function useFileDialog() {
 
       if (filePath) {
         setIsLoading(true)
+
+        if (watchId != null) {
+          await stopWatchDirectory(watchId)
+        }
+
         const structure = await window.api.fileSystem.getDirectoryStructure(filePath)
+        const newWatchId = await watchDirectory(filePath)
+        setWatchId(newWatchId)
         setFileStructure(structure)
         setSelectedFiles({})
       }

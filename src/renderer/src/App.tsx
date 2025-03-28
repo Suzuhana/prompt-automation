@@ -1,8 +1,11 @@
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { Textarea } from './components/ui/textarea'
 import { FileDialog } from './features/file-explorer/components/FileDialog'
+import { useFileWatcherSubscription } from './features/file-watcher/hook/useFileWatcherSubscription'
 
 function App(): JSX.Element {
+  useFileWatcherSubscription()
+
   return (
     <div className="flex h-screen bg-background text-foreground">
       <PanelGroup direction="horizontal">

@@ -35,7 +35,10 @@ export const fileSystemAPI = {
   },
 
   // Listen for directory change events.
-  onDirectoryChanged: (callback: (data: DirectoryChangedData) => void): void => {
+  subscriptToDirectoryChanged: (callback: (data: DirectoryChangedData) => void): void => {
     ipcRenderer.on('directory-changed', (_event, data) => callback(data))
+  },
+  cancelSubDirectoryChanged: (): void => {
+    ipcRenderer.off('directory-changed', () => {})
   }
 }
