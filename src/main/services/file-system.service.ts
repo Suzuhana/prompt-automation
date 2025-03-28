@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { promises as fs } from 'fs'
 import { isBinaryFile } from 'isbinaryfile' // Use the async version
-import { FileNode, FileNodeDirectory, FileNodeFile } from 'src/common/types/file'
+import { FileNode, FileNodeDirectory, FileNodeFile } from 'src/common/types/file-tree-types'
 
 export const FileSystemService = {
   /**

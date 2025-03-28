@@ -2,7 +2,7 @@ import React from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ExpansionIndicator } from './ExpansionIndicator'
 import { FileTypeIcon } from './FileTypeIcon'
-import { FileNode } from 'src/common/types/file'
+import { FileNode } from 'src/common/types/file-tree-types'
 import { Badge } from '@renderer/components/ui/badge'
 import { CheckedState } from '@radix-ui/react-checkbox'
 

@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron'
-import { FileNode } from 'src/common/types/file'
+import { FileNode } from 'src/common/types/file-tree-types'
+import { DirectoryChangedData } from 'src/common/types/file-watcher-types'
 
 /**
  * File system APIs for the renderer process
@@ -21,5 +22,20 @@ export const fileSystemAPI = {
    */
   getDirectoryStructure: (dirPath: string): Promise<FileNode> => {
     return ipcRenderer.invoke('get-directory-structure', dirPath)
+  },
+
+  // Start watching a directory. Returns a watch ID.
+  watchDirectory: (directory: string): Promise<string> => {
+    return ipcRenderer.invoke('start-watch-directory', directory)
+  },
+
+  // Stop watching a directory using its watch ID.
+  stopWatchDirectory: (watchId: string): Promise<boolean> => {
+    return ipcRenderer.invoke('stop-watch-directory', watchId)
+  },
+
+  // Listen for directory change events.
+  onDirectoryChanged: (callback: (data: DirectoryChangedData) => void): void => {
+    ipcRenderer.on('directory-changed', (_event, data) => callback(data))
   }
 }

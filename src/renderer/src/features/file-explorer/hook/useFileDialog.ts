@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { SelectedFiles } from '@/types/file'
 import { OpenDialogOptions } from 'electron'
-import { FileNode } from 'src/common/types/file'
+import { FileNode } from 'src/common/types/file-tree-types'
 
 export function useFileDialog() {
   const [fileStructure, setFileStructure] = useState<FileNode | null>(null)
