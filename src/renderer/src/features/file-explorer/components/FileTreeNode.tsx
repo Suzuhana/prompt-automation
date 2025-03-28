@@ -4,11 +4,12 @@ import { ExpansionIndicator } from './ExpansionIndicator'
 import { FileTypeIcon } from './FileTypeIcon'
 import { FileNode } from 'src/common/types/file'
 import { Badge } from '@renderer/components/ui/badge'
+import { CheckedState } from '@radix-ui/react-checkbox'
 
 interface FileTreeNodeProps {
   node: FileNode
   level: number
-  isSelected: boolean
+  isSelected: CheckedState
   isExpanded: boolean
   onToggleExpand: (event: React.MouseEvent) => void
   onCheckboxChange: (checked: boolean) => void
@@ -40,7 +41,7 @@ export function FileTreeNode({
       onToggleExpand(event)
     } else if (node.type === 'file') {
       // For files, simulate clicking the checkbox (toggle its state)
-      onCheckboxChange(!isSelected)
+      onCheckboxChange(isSelected == 'indeterminate' || isSelected == false ? true : false)
     }
   }
 
@@ -52,7 +53,7 @@ export function FileTreeNode({
       style={indentStyle}
       role="treeitem"
       aria-expanded={node.type === 'directory' ? isExpanded : undefined}
-      aria-selected={isSelected}
+      aria-selected={isSelected != false}
     >
       <ExpansionIndicator isExpanded={isExpanded} isVisible={node.type === 'directory'} />
 

@@ -9,11 +9,20 @@ interface BaseNode {
 export interface FileNodeFile extends BaseNode {
   type: 'file'
   isBinary: boolean
+  /**
+   * Optional reference to the parent node (helps navigate upward in the tree)
+   */
+  parent?: FileNode
 }
 
 export interface FileNodeDirectory extends BaseNode {
   type: 'directory'
-  children?: FileNode[]
+  // Make children mandatory, so it's never `undefined`
+  children: FileNode[]
+  /**
+   * Optional reference to the parent node (helps navigate upward in the tree)
+   */
+  parent?: FileNode
 }
 
 export type FileNode = FileNodeFile | FileNodeDirectory

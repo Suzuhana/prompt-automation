@@ -9,9 +9,10 @@ interface FileTreeProps {
   /**
    * Handles bulk selection of paths.
    * @param paths Array of file/directory paths to select or deselect
+   * @param node FileNode which triggers this update
    * @param selected Whether to select or deselect all given paths
    */
-  onBulkSelectionChange: (paths: string[], selected: boolean) => void
+  onBulkSelectionChange: (paths: string[], node: FileNode, selected: boolean) => void
   level?: number // Make level optional, default to 0
 }
 
@@ -61,7 +62,7 @@ export function FileTree({
   const handleCheckboxChange = useCallback(
     (checked: boolean) => {
       const pathsToUpdate = gatherAllPaths(node)
-      onBulkSelectionChange(pathsToUpdate, checked)
+      onBulkSelectionChange(pathsToUpdate, node, checked)
     },
     [node, onBulkSelectionChange]
   )

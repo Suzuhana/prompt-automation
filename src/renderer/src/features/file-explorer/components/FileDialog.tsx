@@ -1,27 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area' // Import ScrollArea
 import { FileTree } from './FileTree'
-import type { SelectedFiles } from '@/types/file'
 import { useFileDialog } from '../hook/useFileDialog'
 
 export function FileDialog() {
-  const { fileStructure, selectedFiles, isLoading, openFileDialog, setSelectedFiles } =
+  const { fileStructure, selectedFiles, isLoading, openFileDialog, handleBulkSelectionChange } =
     useFileDialog()
-
-  /**
-   * Handle multiple path selections in one update.
-   * This avoids repeated state updates when selecting or deselecting large directories.
-   */
-  const handleBulkSelectionChange = (paths: string[], selected: boolean) => {
-    setSelectedFiles((prev: SelectedFiles) => {
-      // Create a mutable copy for efficient updates
-      const updated = { ...prev }
-      paths.forEach((p) => {
-        updated[p] = selected
-      })
-      return updated
-    })
-  }
 
   // Get count of selected files/directories
   const selectedCount = Object.values(selectedFiles).filter(Boolean).length

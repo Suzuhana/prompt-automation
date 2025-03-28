@@ -32,12 +32,40 @@ export function useFileDialog() {
     }
   }
 
+  function handleBulkSelectionChange(paths: string[], node: FileNode, selected: boolean) {
+    setSelectedFiles((prevSelected) => {
+      const updated = { ...prevSelected }
+      // Update all the provided paths
+      for (const p of paths) {
+        updated[p] = selected
+      }
+
+      let current = node.parent
+      while (current && current.type === 'directory' && current.children) {
+        const allChildrenSelected = current.children.every((child) => updated[child.path] === true)
+        const noneChildrenSelected = current.children.every(
+          (child) => !updated[child.path] || updated[child.path] === false
+        )
+
+        updated[current.path] = allChildrenSelected
+          ? true
+          : noneChildrenSelected
+            ? false
+            : 'indeterminate'
+
+        current = current.parent
+      }
+
+      return updated
+    })
+  }
+
   return {
     fileStructure,
     setFileStructure,
     selectedFiles,
-    setSelectedFiles,
     isLoading,
-    openFileDialog
+    openFileDialog,
+    handleBulkSelectionChange
   }
 }

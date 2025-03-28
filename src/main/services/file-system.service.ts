@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { promises as fs } from 'fs'
 import { isBinaryFile } from 'isbinaryfile' // Use the async version
-import { FileNode } from 'src/common/types/file'
+import { FileNode, FileNodeDirectory, FileNodeFile } from 'src/common/types/file'
 
 export const FileSystemService = {
   /**
@@ -13,49 +13,58 @@ export const FileSystemService = {
     const name = path.basename(dirPath)
     const stats = await fs.stat(dirPath)
 
-    // If it's a file, return immediately
+    // If it's a file, return a FileNodeFile
     if (stats.isFile()) {
       const binary = await isBinaryFile(dirPath)
-      return {
+      const fileNode: FileNodeFile = {
         name,
         path: dirPath,
         type: 'file',
         isBinary: binary
+        // parent not set for top-level file
       }
+      return fileNode
     }
 
-    // If it's a directory, read entries asynchronously
+    // Otherwise, it's a directory. Create a FileNodeDirectory with an empty children array
+    const dirNode: FileNodeDirectory = {
+      name,
+      path: dirPath,
+      type: 'directory',
+      children: []
+      // parent not set for top-level directory
+    }
+
+    // Read entries asynchronously
     const dirents = await fs.readdir(dirPath, { withFileTypes: true })
-    const children: FileNode[] = []
 
     for (const dirent of dirents) {
       const childPath = path.join(dirPath, dirent.name)
       try {
         if (dirent.isDirectory()) {
-          // Recursively process directories
+          // Recursively process subdirectories
           const childNode = await FileSystemService.getDirectoryStructure(childPath)
-          children.push(childNode)
+          // Assign the parent field
+          childNode.parent = dirNode
+          dirNode.children.push(childNode)
         } else if (dirent.isFile()) {
-          // Directly handle files
+          // Handle files
           const binary = await isBinaryFile(childPath)
-          children.push({
+          const childNode: FileNodeFile = {
             name: dirent.name,
             path: childPath,
             type: 'file',
-            isBinary: binary
-          })
+            isBinary: binary,
+            parent: dirNode
+          }
+          dirNode.children.push(childNode)
         }
-        // For other types (e.g., symlinks, sockets, etc.), skip or handle as needed
+        // For other types (symlinks, sockets, etc.), skip or handle as needed
       } catch (error) {
         console.error(`Error reading ${childPath}:`, error)
       }
     }
 
-    return {
-      name,
-      path: dirPath,
-      type: 'directory',
-      children
-    }
+    return dirNode
   }
 }

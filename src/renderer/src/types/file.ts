@@ -1,3 +1,5 @@
+import { CheckedState } from '@radix-ui/react-checkbox'
+
 export interface SelectedFiles {
-  [path: string]: boolean
+  [path: string]: CheckedState
 }
