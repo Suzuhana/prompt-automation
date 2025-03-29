@@ -8,7 +8,6 @@ export function useFileDialog() {
   const initializeWithTreeRoot = useAppStore((state) => state.initializeWithTreeRoot)
   const selectedFiles = useAppStore((state) => state.selectedFiles)
   const setSelectedFiles = useAppStore((state) => state.setSelectedFiles)
-  const handleBulkSelectionChange = useAppStore((state) => state.handleBulkSelectionChange)
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [watchId, setWatchId] = useState<string | null>(null)
@@ -49,7 +48,6 @@ export function useFileDialog() {
     fileStructure: rootNode,
     selectedFiles,
     isLoading,
-    openFileDialog,
-    handleBulkSelectionChange
+    openFileDialog
   }
 }

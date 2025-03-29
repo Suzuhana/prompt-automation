@@ -4,8 +4,7 @@ import { FileTree } from './FileTree'
 import { useFileDialog } from '../hook/useFileDialog'
 
 export function FileDialog() {
-  const { fileStructure, selectedFiles, isLoading, openFileDialog, handleBulkSelectionChange } =
-    useFileDialog()
+  const { fileStructure, selectedFiles, isLoading, openFileDialog } = useFileDialog()
 
   // Get count of selected files/directories
   const selectedCount = Object.values(selectedFiles).filter(Boolean).length
@@ -43,7 +42,6 @@ export function FileDialog() {
             <FileTree
               node={fileStructure}
               selectedFiles={selectedFiles}
-              onBulkSelectionChange={handleBulkSelectionChange}
               // Level prop is optional and defaults to 0 in FileTree
             />
           </div>

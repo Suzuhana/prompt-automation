@@ -14,9 +14,7 @@ export function useFileEventHandler() {
   function removeFileNode(nodePath: string) {
     //TODO
   }
-  function renameFileNode(oldPath: string, newPath: string) {
-    //TODO
-  }
+  function renameFileNode(oldPath: string, newPath: string) {}
 
   return {
     updateFileNode,

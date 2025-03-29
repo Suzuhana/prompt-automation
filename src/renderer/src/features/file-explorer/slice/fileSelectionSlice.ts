@@ -6,6 +6,7 @@ export interface FileSelectionSlice {
   selectedFiles: SelectedFiles
   setSelectedFiles: (files: SelectedFiles) => void
   handleBulkSelectionChange: (paths: string[], node: FileNode, selected: boolean) => void
+  handleCheckboxChange: (node: FileNode, checked: boolean) => void
 }
 
 export const createFileSelectionSlice: StateCreator<
@@ -13,7 +14,7 @@ export const createFileSelectionSlice: StateCreator<
   [],
   [],
   FileSelectionSlice
-> = (set) => ({
+> = (set, get) => ({
   selectedFiles: {},
   setSelectedFiles: (files: SelectedFiles) => set(() => ({ selectedFiles: files })),
   handleBulkSelectionChange: (paths: string[], node: FileNode, selected: boolean) => {
@@ -42,5 +43,28 @@ export const createFileSelectionSlice: StateCreator<
 
       return { selectedFiles: updated }
     })
+  },
+  handleCheckboxChange: (node: FileNode, checked: boolean) => {
+    const pathsToUpdate = gatherAllPaths(node)
+    get().handleBulkSelectionChange(pathsToUpdate, node, checked)
   }
 })
+
+/**
+ * Recursively gather all paths under a node (including its own).
+ */
+function gatherAllPaths(node: FileNode): string[] {
+  const paths: string[] = [node.path] // Start with the node itself
+
+  function recurse(n: FileNode) {
+    if (n.type === 'directory' && n.children) {
+      n.children.forEach((child) => {
+        paths.push(child.path)
+        recurse(child)
+      })
+    }
+  }
+
+  recurse(node)
+  return paths
+}

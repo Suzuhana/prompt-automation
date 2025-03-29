@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react'
 import type { SelectedFiles } from '@/types/file'
 import { FileTreeNode } from './FileTreeNode'
 import { FileNode } from 'src/common/types/file-tree-types'
+import { useAppStore } from '@renderer/store'
 
 interface FileTreeProps {
   node: FileNode
@@ -12,35 +13,15 @@ interface FileTreeProps {
    * @param node FileNode which triggers this update
    * @param selected Whether to select or deselect all given paths
    */
-  onBulkSelectionChange: (paths: string[], node: FileNode, selected: boolean) => void
   level?: number // Make level optional, default to 0
-}
-
-/**
- * Recursively gather all paths under a node (including its own).
- */
-function gatherAllPaths(node: FileNode): string[] {
-  const paths: string[] = [node.path] // Start with the node itself
-
-  function recurse(n: FileNode) {
-    if (n.type === 'directory' && n.children) {
-      n.children.forEach((child) => {
-        paths.push(child.path)
-        recurse(child)
-      })
-    }
-  }
-
-  recurse(node)
-  return paths
 }
 
 export function FileTree({
   node,
   selectedFiles,
-  onBulkSelectionChange,
   level = 0 // Default level to 0
 }: FileTreeProps) {
+  const handleCheckboxChange = useAppStore((state) => state.handleCheckboxChange)
   // State for expansion, default based on level
   const [isExpanded, setIsExpanded] = useState(level < 1) // Auto-expand only the root level initially
 
@@ -58,15 +39,6 @@ export function FileTree({
     [node.type]
   )
 
-  // Memoized checkbox change handler
-  const handleCheckboxChange = useCallback(
-    (checked: boolean) => {
-      const pathsToUpdate = gatherAllPaths(node)
-      onBulkSelectionChange(pathsToUpdate, node, checked)
-    },
-    [node, onBulkSelectionChange]
-  )
-
   return (
     <div role="tree" aria-label="File navigator">
       <FileTreeNode
@@ -75,7 +47,7 @@ export function FileTree({
         isSelected={isSelected}
         isExpanded={isExpanded}
         onToggleExpand={handleToggleExpand}
-        onCheckboxChange={handleCheckboxChange}
+        onCheckboxChange={(checked) => handleCheckboxChange(node, checked)}
       />
 
       {/* Render children if expanded and node is a directory */}
@@ -86,7 +58,6 @@ export function FileTree({
               key={child.path} // Use path as key
               node={child}
               selectedFiles={selectedFiles}
-              onBulkSelectionChange={onBulkSelectionChange}
               level={level + 1} // Increment level for children
             />
           ))}
