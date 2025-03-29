@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import type { SelectedFiles } from '@/types/file'
 import { OpenDialogOptions } from 'electron'
-import { FileNode } from 'src/common/types/file-tree-types'
 import { useFileWatcher } from '@renderer/features/file-watcher/hook/useFileWatcher'
+import { useAppStore } from '@renderer/store'
 
 export function useFileDialog() {
-  const [fileStructure, setFileStructure] = useState<FileNode | null>(null)
-  const [selectedFiles, setSelectedFiles] = useState<SelectedFiles>({})
+  const rootNode = useAppStore((state) => state.treeRoot)
+  const initializeWithTreeRoot = useAppStore((state) => state.initializeWithTreeRoot)
+  const selectedFiles = useAppStore((state) => state.selectedFiles)
+  const setSelectedFiles = useAppStore((state) => state.setSelectedFiles)
+  const handleBulkSelectionChange = useAppStore((state) => state.handleBulkSelectionChange)
+
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [watchId, setWatchId] = useState<string | null>(null)
   const { watchDirectory, stopWatchDirectory } = useFileWatcher()
@@ -32,7 +35,7 @@ export function useFileDialog() {
         const structure = await window.api.fileSystem.getDirectoryStructure(filePath)
         const newWatchId = await watchDirectory(filePath)
         setWatchId(newWatchId)
-        setFileStructure(structure)
+        initializeWithTreeRoot(structure)
         setSelectedFiles({})
       }
     } catch (error) {
@@ -42,37 +45,8 @@ export function useFileDialog() {
     }
   }
 
-  function handleBulkSelectionChange(paths: string[], node: FileNode, selected: boolean) {
-    setSelectedFiles((prevSelected) => {
-      const updated = { ...prevSelected }
-      // Update all the provided paths
-      for (const p of paths) {
-        updated[p] = selected
-      }
-
-      let current = node.parent
-      while (current && current.type === 'directory' && current.children) {
-        const allChildrenSelected = current.children.every((child) => updated[child.path] === true)
-        const noneChildrenSelected = current.children.every(
-          (child) => !updated[child.path] || updated[child.path] === false
-        )
-
-        updated[current.path] = allChildrenSelected
-          ? true
-          : noneChildrenSelected
-            ? false
-            : 'indeterminate'
-
-        current = current.parent
-      }
-
-      return updated
-    })
-  }
-
   return {
-    fileStructure,
-    setFileStructure,
+    fileStructure: rootNode,
     selectedFiles,
     isLoading,
     openFileDialog,

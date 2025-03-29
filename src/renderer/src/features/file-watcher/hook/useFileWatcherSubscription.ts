@@ -7,9 +7,12 @@ export function useFileWatcherSubscription() {
     if (!hasSubscribed.current) {
       hasSubscribed.current = true
       window.api.fileSystem.subscriptToDirectoryChanged((data) => {
-        for (const event of data.events) {
-          console.log(event)
-        }
+        // Group events under a header with the current time
+        console.group(`Directory Changed at ${new Date().toLocaleTimeString()}`)
+        data.events.forEach((event, index) => {
+          console.log(`Event ${index + 1}:`, event)
+        })
+        console.groupEnd()
       })
     }
 
