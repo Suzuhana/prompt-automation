@@ -4,10 +4,8 @@ import { useFileWatcher } from '@renderer/features/file-watcher/hook/useFileWatc
 import { useAppStore } from '@renderer/store'
 
 export function useFileDialog() {
-  const rootNode = useAppStore((state) => state.treeRoot)
+  const rootPath = useAppStore((state) => state.rootPath)
   const initializeWithTreeRoot = useAppStore((state) => state.initializeWithTreeRoot)
-  const selectedFiles = useAppStore((state) => state.selectedFiles)
-  const setSelectedFiles = useAppStore((state) => state.setSelectedFiles)
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [watchId, setWatchId] = useState<string | null>(null)
@@ -35,7 +33,7 @@ export function useFileDialog() {
         const newWatchId = await watchDirectory(filePath)
         setWatchId(newWatchId)
         initializeWithTreeRoot(structure)
-        setSelectedFiles({})
+        // Removed setSelectedFiles as selection is now part of the normalized tree
       }
     } catch (error) {
       console.error('Error opening file dialog:', error)
@@ -45,8 +43,7 @@ export function useFileDialog() {
   }
 
   return {
-    fileStructure: rootNode,
-    selectedFiles,
+    rootPath,
     isLoading,
     openFileDialog
   }

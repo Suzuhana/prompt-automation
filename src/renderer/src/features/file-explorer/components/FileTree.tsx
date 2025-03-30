@@ -1,65 +1,54 @@
 import React, { useState, useCallback } from 'react'
-import type { SelectedFiles } from '@/types/file'
 import { FileTreeNode } from './FileTreeNode'
-import { FileNode } from 'src/common/types/file-tree-types'
 import { useAppStore } from '@renderer/store'
 
 interface FileTreeProps {
-  node: FileNode
-  selectedFiles: SelectedFiles
-  /**
-   * Handles bulk selection of paths.
-   * @param paths Array of file/directory paths to select or deselect
-   * @param node FileNode which triggers this update
-   * @param selected Whether to select or deselect all given paths
-   */
-  level?: number // Make level optional, default to 0
+  nodePath: string
+  level?: number
 }
 
-export function FileTree({
-  node,
-  selectedFiles,
-  level = 0 // Default level to 0
-}: FileTreeProps) {
+export function FileTree({ nodePath, level = 0 }: FileTreeProps) {
+  // Access the node data via store's normalized entities
+  const node = useAppStore((state) => state.entities[nodePath])
   const handleCheckboxChange = useAppStore((state) => state.handleCheckboxChange)
-  // State for expansion, default based on level
-  const [isExpanded, setIsExpanded] = useState(level < 1) // Auto-expand only the root level initially
 
-  // Determine if the current node is selected
-  const isSelected = selectedFiles[node.path] || false
+  // Local expansion state
+  const [isExpanded, setIsExpanded] = useState(level < 1)
 
-  // Memoized toggle expansion handler
+  // Use the selection state from the normalized node
+  const isSelected = node?.selected ?? false
+
+  // Toggle expand/collapse only if it's a directory
   const handleToggleExpand = useCallback(
     (e: React.MouseEvent) => {
-      e.stopPropagation() // Prevent event bubbling
-      if (node.type === 'directory') {
+      e.stopPropagation()
+      if (node?.type === 'directory') {
         setIsExpanded((prev) => !prev)
       }
     },
-    [node.type]
+    [node?.type]
   )
+
+  if (!node) {
+    // If there's no entity in the store for this path, render nothing
+    return null
+  }
 
   return (
     <div role="tree" aria-label="File navigator">
       <FileTreeNode
-        node={node}
+        nodePath={nodePath}
         level={level}
         isSelected={isSelected}
         isExpanded={isExpanded}
         onToggleExpand={handleToggleExpand}
-        onCheckboxChange={(checked) => handleCheckboxChange(node, checked)}
+        onCheckboxChange={(checked) => handleCheckboxChange(nodePath, checked)}
       />
 
-      {/* Render children if expanded and node is a directory */}
-      {isExpanded && node.type === 'directory' && node.children && node.children.length > 0 && (
+      {isExpanded && node.type === 'directory' && node.childPaths && node.childPaths.length > 0 && (
         <div role="group">
-          {node.children.map((child) => (
-            <FileTree // Recursive call for children
-              key={child.path} // Use path as key
-              node={child}
-              selectedFiles={selectedFiles}
-              level={level + 1} // Increment level for children
-            />
+          {node.childPaths.map((childPath) => (
+            <FileTree key={childPath} nodePath={childPath} level={level + 1} />
           ))}
         </div>
       )}
