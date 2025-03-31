@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron'
-import { FileNode } from 'src/common/types/file-tree-types'
+import { FileNode, NormalizedDirectoryStructure } from 'src/common/types/file-tree-types'
 import { DirectoryChangedData } from 'src/common/types/file-watcher-types'
 
 /**
@@ -40,5 +40,22 @@ export const fileSystemAPI = {
   },
   cancelSubDirectoryChanged: (): void => {
     ipcRenderer.off('directory-changed', () => {})
+  },
+
+  // NEW: Get the normalized directory structure.
+  getNormalizedDirectoryStructure: (dirPath: string): Promise<NormalizedDirectoryStructure> => {
+    return ipcRenderer.invoke('get-normalized-directory-structure', dirPath)
+  },
+  // NEW: Subscribe to normalized directory structure updates.
+  subscriptToNormalizedDirectoryChanged: (
+    callback: (data: NormalizedDirectoryStructure) => void
+  ): void => {
+    ipcRenderer.on('normalized-directory-changed', (_event, data: NormalizedDirectoryStructure) =>
+      callback(data)
+    )
+  },
+  // NEW: Cancel subscription for normalized directory structure updates.
+  cancelSubNormalizedDirectoryChanged: (): void => {
+    ipcRenderer.off('normalized-directory-changed', () => {})
   }
 }

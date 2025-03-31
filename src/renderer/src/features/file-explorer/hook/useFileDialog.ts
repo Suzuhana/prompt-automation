@@ -29,10 +29,10 @@ export function useFileDialog() {
           await stopWatchDirectory(watchId)
         }
 
-        const structure = await window.api.fileSystem.getDirectoryStructure(filePath)
+        const { root, map } = await window.api.fileSystem.getNormalizedDirectoryStructure(filePath)
         const newWatchId = await watchDirectory(filePath)
         setWatchId(newWatchId)
-        initializeWithTreeRoot(structure)
+        initializeWithTreeRoot(root, map)
         // Removed setSelectedFiles as selection is now part of the normalized tree
       }
     } catch (error) {

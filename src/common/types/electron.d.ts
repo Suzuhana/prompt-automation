@@ -1,4 +1,4 @@
-import { FileNode } from 'src/common/types/file-tree-types'
+import { FileNode, NormalizedDirectoryStructure } from 'src/common/types/file-tree-types'
 import { DirectoryChangedData } from './file-watcher-types'
 
 /**
@@ -21,6 +21,20 @@ declare global {
         stopWatchDirectory: (watchId: string) => Promise<boolean>
         subscriptToDirectoryChanged: (callback: (data: DirectoryChangedData) => void) => void
         cancelSubDirectoryChanged: () => void
+        /**
+         * Gets the normalized file map for a given directory.
+         */
+        getNormalizedDirectoryStructure: (dirPath: string) => Promise<NormalizedDirectoryStructure>
+        /**
+         * Subscribe to normalized directory structure updates.
+         */
+        subscriptToNormalizedDirectoryChanged: (
+          callback: (data: NormalizedDirectoryStructure) => void
+        ) => void
+        /**
+         * Cancel subscription for normalized directory structure updates.
+         */
+        cancelSubNormalizedDirectoryChanged: () => void
       }
     }
   }

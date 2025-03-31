@@ -1,6 +1,7 @@
 // main/ipc/file-watcher.ipc.ts
 import { ipcMain } from 'electron'
 import { FileWatcherService } from '../services/file-watcher.service'
+import normalizedFileMapService from '../services/normalized-file-map.service'
 
 /**
  * Initialize IPC handlers for file watching.
@@ -9,9 +10,13 @@ export function initFileWatcherIPC(): void {
   // Start watching a directory.
   ipcMain.handle('start-watch-directory', async (event, directory: string) => {
     try {
-      const watchId = await FileWatcherService.watchDirectory(directory, (events) => {
-        // Forward events to the renderer process using a dedicated channel.
-        event.sender.send('directory-changed', { watchId, events })
+      // Build the initial normalized map.
+      await normalizedFileMapService.buildNormalizedMap(directory)
+      // Start the watcher; on events update the normalized map.
+      const watchId = await FileWatcherService.watchDirectory(directory, async (events) => {
+        event.sender.send('directory-changed', { watchId, events }) // this is just for logging
+        await normalizedFileMapService.updateMapForEvents(events)
+        // Note: the normalized service itself notifies the renderer (debounced)
       })
       return watchId
     } catch (error) {

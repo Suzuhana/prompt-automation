@@ -1,5 +1,6 @@
 import { ipcMain, dialog } from 'electron'
 import { FileSystemService } from '../services/file-system.service'
+import normalizedFileMapService from '../services/normalized-file-map.service'
 
 /**
  * Initialize IPC handlers specific to file system actions
@@ -28,6 +29,15 @@ export function initFileSystemIPC(): void {
       throw error
     }
   })
+  ipcMain.handle('get-normalized-directory-structure', async (_event, dirPath: string) => {
+    try {
+      const { root, map } = await normalizedFileMapService.buildNormalizedMap(dirPath)
+      return { root, map }
+    } catch (error) {
+      console.error('Error in get-normalized-directory-structure handler:', error)
+      throw error
+    }
+  })
 }
 
 /**
@@ -36,4 +46,5 @@ export function initFileSystemIPC(): void {
 export function removeFileSystemIPC(): void {
   ipcMain.removeHandler('open-file-dialog')
   ipcMain.removeHandler('get-directory-structure')
+  ipcMain.removeHandler('get-normalized-directory-structure')
 }

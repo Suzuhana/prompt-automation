@@ -26,3 +26,34 @@ export interface FileNodeDirectory extends BaseNode {
 }
 
 export type FileNode = FileNodeFile | FileNodeDirectory
+
+/**
+ * Normalized version of a node.
+ * Instead of storing nested children, we only keep a list of child paths (for directories)
+ * and store `parentPath` as a string reference instead of a FileNode reference.
+ */
+export interface NormalizedFileNode {
+  path: string
+  name: string
+  type: 'file' | 'directory'
+  /**
+   * For file nodes
+   */
+  isBinary?: boolean
+  /**
+   * For a directory node, childPaths is an array of the children’s `path`.
+   */
+  childPaths?: string[]
+  /**
+   * Reference to the parent node's path
+   */
+  parentPath?: string
+}
+
+/**
+ * Type representing the complete normalized directory structure.
+ */
+export interface NormalizedDirectoryStructure {
+  root: string
+  map: { [path: string]: NormalizedFileNode }
+}

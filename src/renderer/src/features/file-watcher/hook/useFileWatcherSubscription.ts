@@ -1,7 +1,9 @@
+import { useAppStore } from '@renderer/store'
 import { useEffect, useRef } from 'react'
 
 export function useFileWatcherSubscription() {
   const hasSubscribed = useRef(false)
+  const initializeWithTreeRoot = useAppStore((state) => state.initializeWithTreeRoot)
 
   useEffect(() => {
     if (!hasSubscribed.current) {
@@ -14,10 +16,14 @@ export function useFileWatcherSubscription() {
         })
         console.groupEnd()
       })
+      window.api.fileSystem.subscriptToNormalizedDirectoryChanged((data) => {
+        initializeWithTreeRoot(data.root, data.map)
+      })
     }
 
     return () => {
       window.api.fileSystem.cancelSubDirectoryChanged()
+      window.api.fileSystem.cancelSubNormalizedDirectoryChanged()
     }
-  }, [])
+  }, [initializeWithTreeRoot])
 }
