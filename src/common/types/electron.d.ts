@@ -1,4 +1,4 @@
-import { FileNode, NormalizedDirectoryStructure } from 'src/common/types/file-tree-types'
+import { NormalizedDirectoryStructure } from 'src/common/types/file-tree-types'
 import { DirectoryChangedData } from './file-watcher-types'
 
 /**
@@ -12,11 +12,6 @@ declare global {
          * Opens a file dialog for selecting files or directories
          */
         openFileDialog: (options: Electron.OpenDialogOptions) => Promise<string | null>
-
-        /**
-         * Gets the directory structure for a given path
-         */
-        getDirectoryStructure: (dirPath: string) => Promise<FileNode>
         watchDirectory: (directory: string) => Promise<string>
         stopWatchDirectory: (watchId: string) => Promise<boolean>
         subscriptToDirectoryChanged: (callback: (data: DirectoryChangedData) => void) => void

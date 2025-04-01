@@ -1,5 +1,5 @@
 import { ipcRenderer } from 'electron'
-import { FileNode, NormalizedDirectoryStructure } from 'src/common/types/file-tree-types'
+import { NormalizedDirectoryStructure } from 'src/common/types/file-tree-types'
 import { DirectoryChangedData } from 'src/common/types/file-watcher-types'
 
 /**
@@ -13,15 +13,6 @@ export const fileSystemAPI = {
    */
   openFileDialog: (options: Electron.OpenDialogOptions): Promise<string | null> => {
     return ipcRenderer.invoke('open-file-dialog', options)
-  },
-
-  /**
-   * Gets the directory structure for a given path
-   * @param dirPath Path to the directory or file
-   * @returns Promise resolving to the directory structure
-   */
-  getDirectoryStructure: (dirPath: string): Promise<FileNode> => {
-    return ipcRenderer.invoke('get-directory-structure', dirPath)
   },
 
   // Start watching a directory. Returns a watch ID.
