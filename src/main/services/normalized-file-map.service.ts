@@ -5,6 +5,7 @@ import { isBinaryFile } from 'isbinaryfile'
 import { WatcherEvent } from 'src/common/types/file-watcher-types'
 import { BrowserWindow } from 'electron'
 import { NormalizedDirectoryStructure, NormalizedFileNode } from 'src/common/types/file-tree-types'
+import { CHANNELS } from 'src/common/types/channel-names'
 
 class NormalizedFileMapService {
   // The normalized map: key is the absolute file path.
@@ -153,7 +154,10 @@ class NormalizedFileMapService {
     const normalizedObj = Object.fromEntries(this.normalizedMap)
     const win = BrowserWindow.getAllWindows()[0]
     if (win) {
-      win.webContents.send('normalized-directory-changed', { root: this.root, map: normalizedObj })
+      win.webContents.send(CHANNELS.NORMALIZED_DIRECTORY_CHANGED, {
+        root: this.root,
+        map: normalizedObj
+      })
     }
   }
 }
