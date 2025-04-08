@@ -31,6 +31,27 @@ export const createFileSlice: StateCreator<FileSlice, [], [], FileSlice> = (set)
         newEntities[path] = { ...map[path], selected }
       }
 
+      // Sort childPaths for directory nodes:
+      // Directories come before files and, within each type, they are sorted alphabetically.
+      Object.keys(newEntities).forEach((path) => {
+        const node = newEntities[path]
+        if (node.type === 'directory' && node.childPaths && node.childPaths.length > 0) {
+          node.childPaths.sort((a, b) => {
+            const nodeA = newEntities[a]
+            const nodeB = newEntities[b]
+            if (nodeA && nodeB) {
+              // Directories should come before files.
+              if (nodeA.type !== nodeB.type) {
+                return nodeA.type === 'directory' ? -1 : 1
+              }
+              // If same type, sort alphabetically by name.
+              return nodeA.name.localeCompare(nodeB.name)
+            }
+            return 0
+          })
+        }
+      })
+
       // Recompute selection states for directories from bottom to top
       if (root && newEntities[root]) {
         recalcDirectorySelection(root, newEntities)
