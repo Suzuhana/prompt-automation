@@ -1,30 +1,38 @@
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { Textarea } from './components/ui/textarea'
 import { FileDialog } from './features/file-explorer/components/FileDialog'
 import { useFileWatcherSubscription } from './features/file-watcher/hook/useFileWatcherSubscription'
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
+import { FileSelectionPreview } from './features/file-selection-preview/components/FileSelectionPreview'
 
 function App(): JSX.Element {
   useFileWatcherSubscription()
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <PanelGroup direction="horizontal">
-        <Panel minSize={35} defaultSize={40} className="flex flex-col">
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel minSize={35} defaultSize={40} className="flex flex-col">
           <FileDialog />
-        </Panel>
+        </ResizablePanel>
 
-        <PanelResizeHandle className="w-1 border-l border-r border-border cursor-col-resize" />
+        <ResizableHandle />
 
         {/* Right Panel (takes remaining width) - Make it a flex column */}
-        <Panel minSize={20} className="p-6 flex flex-col gap-4">
-          <h2 className="text-xl font-semibold">Content Area</h2>
-          {/* Textarea - Use flex-grow to make it fill available vertical space */}
-          <Textarea
-            placeholder="Enter text here..."
-            className="flex-grow resize-none" // flex-grow makes it expand, resize-none disables manual resizing handle
-          />
-        </Panel>
-      </PanelGroup>
+        <ResizablePanel minSize={20} className="flex flex-col gap-4">
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={50} minSize={20} className="p-3 flex flex-col gap-2">
+              <h2 className="text-xl font-semibold">Instructions</h2>
+              <Textarea
+                placeholder="Enter text here..."
+                className="flex-grow resize-none" // flex-grow makes it expand, resize-none disables manual resizing handle
+              />
+            </ResizablePanel>
+            <ResizableHandle />
+            <ResizablePanel defaultSize={50} minSize={20} className="p-3 flex flex-col gap-2">
+              <FileSelectionPreview></FileSelectionPreview>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   )
 }
