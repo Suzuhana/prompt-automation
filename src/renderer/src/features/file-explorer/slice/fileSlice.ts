@@ -3,18 +3,10 @@ import type { StateCreator } from 'zustand'
 import { CheckedState } from '@radix-ui/react-checkbox'
 import { CheckedNormalizedFileNode } from './type'
 
-/**
- * FileSlice is now responsible for the normalized file tree.
- */
 export interface FileSlice {
-  // The “entry point” for our normalized tree
   rootPath: string | null
-  // The normalized node collection, keyed by path, using the refactored type
   entities: { [path: string]: CheckedNormalizedFileNode }
   initializeWithTreeRoot: (root: string, map: { [path: string]: NormalizedFileNode }) => void
-  /**
-   * Update selection state for a node (and update descendants/ancestors accordingly)
-   */
   handleCheckboxChange: (nodePath: string, selected: boolean) => void
 }
 
@@ -22,20 +14,32 @@ export const createFileSlice: StateCreator<FileSlice, [], [], FileSlice> = (set)
   rootPath: null,
   entities: {},
 
+  /**
+   * Modified to merge existing selection states, rather than overwrite everything.
+   * Newly added nodes default to `false`.
+   * After merging, we recursively recalc directory selection states from children.
+   */
   initializeWithTreeRoot: (root: string, map: { [path: string]: NormalizedFileNode }) => {
-    // Initialize each node with a default selected state (false)
-    const updatedMap = Object.keys(map).reduce(
-      (acc, key) => {
-        const node = map[key]
-        acc[key] = { ...node, selected: false } as CheckedNormalizedFileNode
-        return acc
-      },
-      {} as { [path: string]: CheckedNormalizedFileNode }
-    )
+    set((state) => {
+      const oldEntities = state.entities
+      const newEntities: { [path: string]: CheckedNormalizedFileNode } = {}
 
-    set({
-      rootPath: root,
-      entities: updatedMap
+      // Build the new entities map, preserving old selection where possible
+      for (const path in map) {
+        const oldNode = oldEntities[path]
+        const selected = oldNode ? oldNode.selected : false // default false for newly added
+        newEntities[path] = { ...map[path], selected }
+      }
+
+      // Recompute selection states for directories from bottom to top
+      if (root && newEntities[root]) {
+        recalcDirectorySelection(root, newEntities)
+      }
+
+      return {
+        rootPath: root,
+        entities: newEntities
+      }
     })
   },
 
@@ -46,18 +50,15 @@ export const createFileSlice: StateCreator<FileSlice, [], [], FileSlice> = (set)
       if (!node) return state
 
       if (node.type === 'directory') {
-        // For directories, if current state is true then toggle to false;
-        // otherwise (false or 'indeterminate') set to true.
+        // For directories, toggle true/false (indeterminate is handled by children).
         const newChecked = node.selected === true ? false : true
         entities[nodePath] = { ...node, selected: newChecked }
-        // Propagate new state downwards to all descendants.
         updateDescendants(entities, nodePath, newChecked)
       } else {
-        // For file nodes, simply update its checked state.
+        // For files, simply set the boolean checked state
         entities[nodePath] = { ...node, selected }
       }
 
-      // Update the ancestors based on the updated children state.
       updateAncestors(entities, node.parentPath)
       return { entities }
     })
@@ -65,7 +66,54 @@ export const createFileSlice: StateCreator<FileSlice, [], [], FileSlice> = (set)
 })
 
 /**
- * Recursively updates the selected state for all descendant nodes.
+ * Recursively calculates the correct directory selection state based on its children.
+ * - If all children are true → directory is `true`
+ * - If all children are false → directory is `false`
+ * - Otherwise → directory is `'indeterminate'`
+ */
+function recalcDirectorySelection(
+  nodePath: string,
+  entities: { [path: string]: CheckedNormalizedFileNode }
+): CheckedState {
+  const node = entities[nodePath]
+  if (!node) return false
+
+  if (node.type === 'file') {
+    return node.selected
+  }
+
+  if (!node.childPaths || node.childPaths.length === 0) {
+    // No children: keep whatever state is set (or default to false).
+    return node.selected
+  }
+
+  let foundTrue = false
+  let foundFalse = false
+
+  for (const childPath of node.childPaths) {
+    const childState = recalcDirectorySelection(childPath, entities)
+    if (childState === true) {
+      foundTrue = true
+    } else if (childState === false) {
+      foundFalse = true
+    } else {
+      // childState === 'indeterminate'
+      foundTrue = true
+      foundFalse = true
+    }
+  }
+
+  let newSelection: CheckedState = 'indeterminate'
+  if (foundTrue && !foundFalse) newSelection = true
+  else if (!foundTrue && foundFalse) newSelection = false
+
+  // Update this directory’s selection
+  node.selected = newSelection
+  return newSelection
+}
+
+/**
+ * For toggling descendants when a directory changes state.
  */
 function updateDescendants(
   entities: { [path: string]: CheckedNormalizedFileNode },
@@ -87,7 +135,7 @@ function updateDescendants(
 }
 
 /**
- * Recursively updates the selected state for ancestor nodes based on their children's states.
+ * For updating ancestors after an individual node changes state.
  */
 function updateAncestors(
   entities: { [path: string]: CheckedNormalizedFileNode },
