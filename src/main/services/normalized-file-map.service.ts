@@ -6,6 +6,7 @@ import { WatcherEvent } from 'src/common/types/file-watcher-types'
 import { BrowserWindow } from 'electron'
 import { NormalizedDirectoryStructure, NormalizedFileNode } from 'src/common/types/file-tree-types'
 import { CHANNELS } from 'src/common/types/channel-names'
+import { encoding_for_model } from 'tiktoken'
 
 class NormalizedFileMapService {
   // The normalized map: key is the absolute file path.
@@ -28,25 +29,25 @@ class NormalizedFileMapService {
 
   private async recursiveBuild(currentPath: string, parentPath?: string): Promise<void> {
     const stats = await fs.stat(currentPath)
-    const node: NormalizedFileNode = {
-      path: currentPath,
-      name: path.basename(currentPath),
-      type: stats.isDirectory() ? 'directory' : 'file',
-      parentPath: parentPath
-    }
+    if (stats.isDirectory()) {
+      const dirNode: NormalizedFileNode = {
+        path: currentPath,
+        name: path.basename(currentPath),
+        type: 'directory',
+        parentPath,
+        childPaths: []
+      }
+      this.normalizedMap.set(currentPath, dirNode)
 
-    if (stats.isFile()) {
-      node.isBinary = await isBinaryFile(currentPath)
-      this.normalizedMap.set(currentPath, node)
-    } else if (stats.isDirectory()) {
-      node.childPaths = []
-      this.normalizedMap.set(currentPath, node)
       const entries = await fs.readdir(currentPath)
       for (const entry of entries) {
         const fullPath = path.join(currentPath, entry)
-        node.childPaths.push(fullPath)
+        dirNode.childPaths!.push(fullPath)
         await this.recursiveBuild(fullPath, currentPath)
       }
+    } else {
+      const fileNode = await this.buildFileNode(currentPath, parentPath)
+      this.normalizedMap.set(currentPath, fileNode)
     }
   }
 
@@ -84,6 +85,7 @@ class NormalizedFileMapService {
           } else if (this.root && eventPath !== this.root) {
             computedParentPath = path.dirname(eventPath)
           }
+
           if (stats.isDirectory()) {
             // Remove any existing subtree for the directory.
             for (const key of [...this.normalizedMap.keys()]) {
@@ -105,15 +107,10 @@ class NormalizedFileMapService {
               }
             }
           } else {
-            // For files, create a new node.
-            const newNode: NormalizedFileNode = {
-              path: eventPath,
-              name: path.basename(eventPath),
-              type: 'file',
-              parentPath: computedParentPath
-            }
-            newNode.isBinary = await isBinaryFile(eventPath)
-            // Update parent's childPaths.
+            // For files, build a new file node
+            const newNode = await this.buildFileNode(eventPath, computedParentPath)
+
+            // Update parent's childPaths
             if (computedParentPath) {
               const parentNode = this.normalizedMap.get(computedParentPath)
               if (
@@ -132,6 +129,32 @@ class NormalizedFileMapService {
       }
     }
     this.debouncedNotify()
+  }
+
+  private async buildFileNode(filePath: string, parentPath?: string): Promise<NormalizedFileNode> {
+    const isBin = await isBinaryFile(filePath)
+    const fileNode: NormalizedFileNode = {
+      path: filePath,
+      name: path.basename(filePath),
+      type: 'file',
+      parentPath,
+      isBinary: isBin
+    }
+
+    if (!isBin) {
+      // Read file content as UTF-8 text
+      const text = await fs.readFile(filePath, 'utf8')
+      // Estimate token count using tiktoken
+      const model = 'o1-2024-12-17'
+      const encoding = encoding_for_model(model)
+      const tokens = encoding.encode(text)
+      fileNode.tokenCount = tokens.length
+      encoding.free()
+    } else {
+      fileNode.tokenCount = undefined
+    }
+
+    return fileNode
   }
 
   /**

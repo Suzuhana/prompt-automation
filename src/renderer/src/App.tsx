@@ -27,7 +27,7 @@ function App(): JSX.Element {
               />
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize={50} minSize={20} className="p-3 flex flex-col gap-2">
+            <ResizablePanel defaultSize={50} minSize={20} className="p-3 flex flex-col">
               <FileSelectionPreview></FileSelectionPreview>
             </ResizablePanel>
           </ResizablePanelGroup>

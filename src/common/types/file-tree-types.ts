@@ -40,6 +40,7 @@ export interface NormalizedFileNode {
    * For file nodes
    */
   isBinary?: boolean
+  tokenCount?: number
   /**
    * For a directory node, childPaths is an array of the children’s `path`.
    */

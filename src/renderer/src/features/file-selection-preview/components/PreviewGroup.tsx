@@ -1,16 +1,22 @@
 import { File, Folder, Trash } from 'lucide-react'
 
-interface PreviewGroupProps {
+interface PreviewDirectoryGroupProps {
   directoryPath: string
   files: PreviewFile[]
+  onDeselect: (path: string) => void
 }
 
 interface PreviewFile {
+  path: string
   name: string
   tokenSize: number
 }
 
-export function PreviewGroup({ directoryPath, files }: PreviewGroupProps) {
+export function PreviewDirectoryGroup({
+  directoryPath,
+  files,
+  onDeselect
+}: PreviewDirectoryGroupProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="bg-blue-500/30 flex flex-row items-center rounded-sm px-2">
@@ -31,7 +37,9 @@ export function PreviewGroup({ directoryPath, files }: PreviewGroupProps) {
               <p>{file.tokenSize}</p>
             </div>
             <div
-              onClick={() => {}}
+              onClick={() => {
+                onDeselect(file.path)
+              }}
               className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Trash size={16} className="text-red-500" />
