@@ -28,27 +28,44 @@ class NormalizedFileMapService {
   }
 
   private async recursiveBuild(currentPath: string, parentPath?: string): Promise<void> {
+    // First, ensure that currentPath is a directory (just once).
     const stats = await fs.stat(currentPath)
-    if (stats.isDirectory()) {
-      const dirNode: NormalizedFileNode = {
-        path: currentPath,
-        name: path.basename(currentPath),
-        type: 'directory',
-        parentPath,
-        childPaths: []
-      }
-      this.normalizedMap.set(currentPath, dirNode)
-
-      const entries = await fs.readdir(currentPath)
-      for (const entry of entries) {
-        const fullPath = path.join(currentPath, entry)
-        dirNode.childPaths!.push(fullPath)
-        await this.recursiveBuild(fullPath, currentPath)
-      }
-    } else {
+    if (!stats.isDirectory()) {
+      // If it's not a directory, fall back to building a file node directly
       const fileNode = await this.buildFileNode(currentPath, parentPath)
       this.normalizedMap.set(currentPath, fileNode)
+      return
     }
+
+    // Create a directory node
+    const dirNode: NormalizedFileNode = {
+      path: currentPath,
+      name: path.basename(currentPath),
+      type: 'directory',
+      parentPath,
+      childPaths: []
+    }
+    this.normalizedMap.set(currentPath, dirNode)
+
+    // Use 'withFileTypes' to distinguish files/directories without extra stat calls
+    const dirents = await fs.readdir(currentPath, { withFileTypes: true })
+
+    // Prepare an array of async tasks so we can run them in parallel
+    const tasks = dirents.map(async (dirent) => {
+      const fullPath = path.join(currentPath, dirent.name)
+      // Add child path to the directory node
+      dirNode.childPaths!.push(fullPath)
+
+      if (dirent.isDirectory()) {
+        await this.recursiveBuild(fullPath, currentPath)
+      } else {
+        const fileNode = await this.buildFileNode(fullPath, currentPath)
+        this.normalizedMap.set(fullPath, fileNode)
+      }
+    })
+
+    // Await all the tasks in parallel
+    await Promise.all(tasks)
   }
 
   /**
