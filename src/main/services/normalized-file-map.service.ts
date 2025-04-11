@@ -21,6 +21,15 @@ class NormalizedFileMapService {
 
     await this.buildMapUsingReaddirp(dirPath)
 
+    // Populate file details for each file node in the map after the tree is built
+    const fileDetailPromises: Promise<void>[] = []
+    for (const [filePath, node] of this.normalizedMap.entries()) {
+      if (node.type === 'file') {
+        fileDetailPromises.push(this.populateFileDetailsForPath(filePath))
+      }
+    }
+    await Promise.all(fileDetailPromises)
+
     this.debouncedNotify()
     return { root: this.root!, map: Object.fromEntries(this.normalizedMap) }
   }
@@ -77,7 +86,7 @@ class NormalizedFileMapService {
               }
             }
           } else if (stats.isFile()) {
-            const newNode = await this.buildFileNode(eventPath, computedParentPath)
+            const newNode = await this.buildBasicFileNode(eventPath, computedParentPath)
             if (computedParentPath) {
               const parentNode = this.normalizedMap.get(computedParentPath)
               if (
@@ -89,6 +98,8 @@ class NormalizedFileMapService {
               }
             }
             this.normalizedMap.set(eventPath, newNode)
+            // Populate detailed file info asynchronously for the updated/created file
+            await this.populateFileDetailsForPath(eventPath)
           } else {
             this.normalizedMap.delete(eventPath)
           }
@@ -134,8 +145,8 @@ class NormalizedFileMapService {
           parentNode.childPaths!.push(fullPath)
         }
       } else if (stats.isFile()) {
-        // Create a file node
-        const fileNode = await this.buildFileNode(fullPath, parent)
+        // Create a file node with basic info only
+        const fileNode = await this.buildBasicFileNode(fullPath, parent)
         this.normalizedMap.set(fullPath, fileNode)
         // Link file to parent's childPaths
         const parentNode = this.getOrCreateDirectoryNode(parent)
@@ -143,6 +154,30 @@ class NormalizedFileMapService {
           parentNode.childPaths!.push(fullPath)
         }
       }
+    }
+  }
+
+  private async populateFileDetailsForPath(filePath: string): Promise<void> {
+    const node = this.normalizedMap.get(filePath)
+    if (!node || node.type !== 'file') {
+      return
+    }
+    try {
+      const isBin = await isBinaryFile(filePath)
+      node.isBinary = isBin
+      if (!isBin) {
+        const text = await fs.readFile(filePath, 'utf8')
+        const model = 'o1-2024-12-17'
+        const encoding = encoding_for_model(model)
+        const tokens = encoding.encode(text)
+        node.tokenCount = tokens.length
+        encoding.free()
+      } else {
+        node.tokenCount = undefined
+      }
+      this.normalizedMap.set(filePath, node)
+    } catch (error) {
+      console.error(`Error populating details for file ${filePath}:`, error)
     }
   }
 
@@ -165,25 +200,16 @@ class NormalizedFileMapService {
     return node
   }
 
-  private async buildFileNode(filePath: string, parentPath?: string): Promise<NormalizedFileNode> {
-    const isBin = await isBinaryFile(filePath)
+  private async buildBasicFileNode(
+    filePath: string,
+    parentPath?: string
+  ): Promise<NormalizedFileNode> {
     const fileNode: NormalizedFileNode = {
       path: filePath,
       name: path.basename(filePath),
       type: 'file',
-      parentPath,
-      isBinary: isBin
-    }
-
-    if (!isBin) {
-      const text = await fs.readFile(filePath, 'utf8')
-      const model = 'o1-2024-12-17'
-      const encoding = encoding_for_model(model)
-      const tokens = encoding.encode(text)
-      fileNode.tokenCount = tokens.length
-      encoding.free()
-    } else {
-      fileNode.tokenCount = undefined
+      parentPath
+      // isBinary and tokenCount will be populated later via populateFileDetailsForPath()
     }
     return fileNode
   }
