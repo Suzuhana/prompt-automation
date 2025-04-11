@@ -1,4 +1,3 @@
-// main/services/normalized-file-map.service.ts
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import { isBinaryFile } from 'isbinaryfile'
@@ -7,70 +6,25 @@ import { BrowserWindow } from 'electron'
 import { NormalizedDirectoryStructure, NormalizedFileNode } from 'src/common/types/file-tree-types'
 import { CHANNELS } from 'src/common/types/channel-names'
 import { encoding_for_model } from 'tiktoken'
+import { readdirp } from 'readdirp'
 
 class NormalizedFileMapService {
-  // The normalized map: key is the absolute file path.
   private normalizedMap: Map<string, NormalizedFileNode> = new Map()
-  // The root normalized node
   private root: string | null = null
   private notifyTimeout: NodeJS.Timeout | null = null
+  private ignoredPatterns: string[] = []
 
-  /**
-   * Recursively build the normalized file map starting at the given directory.
-   * Returns an object containing the root node and the normalized map.
-   */
   public async buildNormalizedMap(dirPath: string): Promise<NormalizedDirectoryStructure> {
     this.normalizedMap.clear()
-    await this.recursiveBuild(dirPath, undefined)
+    await this.loadIgnorePatterns(dirPath)
     this.root = dirPath || null
+
+    await this.buildMapUsingReaddirp(dirPath)
+
     this.debouncedNotify()
     return { root: this.root!, map: Object.fromEntries(this.normalizedMap) }
   }
 
-  private async recursiveBuild(currentPath: string, parentPath?: string): Promise<void> {
-    // First, ensure that currentPath is a directory (just once).
-    const stats = await fs.stat(currentPath)
-    if (!stats.isDirectory()) {
-      // If it's not a directory, fall back to building a file node directly
-      const fileNode = await this.buildFileNode(currentPath, parentPath)
-      this.normalizedMap.set(currentPath, fileNode)
-      return
-    }
-
-    // Create a directory node
-    const dirNode: NormalizedFileNode = {
-      path: currentPath,
-      name: path.basename(currentPath),
-      type: 'directory',
-      parentPath,
-      childPaths: []
-    }
-    this.normalizedMap.set(currentPath, dirNode)
-
-    // Use 'withFileTypes' to distinguish files/directories without extra stat calls
-    const dirents = await fs.readdir(currentPath, { withFileTypes: true })
-
-    // Prepare an array of async tasks so we can run them in parallel
-    const tasks = dirents.map(async (dirent) => {
-      const fullPath = path.join(currentPath, dirent.name)
-      // Add child path to the directory node
-      dirNode.childPaths!.push(fullPath)
-
-      if (dirent.isDirectory()) {
-        await this.recursiveBuild(fullPath, currentPath)
-      } else {
-        const fileNode = await this.buildFileNode(fullPath, currentPath)
-        this.normalizedMap.set(fullPath, fileNode)
-      }
-    })
-
-    // Await all the tasks in parallel
-    await Promise.all(tasks)
-  }
-
-  /**
-   * Update the normalized map based on a batch of file system events.
-   */
   public async updateMapForEvents(events: WatcherEvent[]): Promise<void> {
     for (const event of events) {
       const { path: eventPath, type } = event
@@ -83,7 +37,6 @@ class NormalizedFileMapService {
               parentNode.childPaths = parentNode.childPaths.filter((p) => p !== eventPath)
             }
           }
-          // If the deleted node is a directory, remove all descendants.
           if (node && node.type === 'directory') {
             for (const key of [...this.normalizedMap.keys()]) {
               if (key !== eventPath && key.startsWith(eventPath + path.sep)) {
@@ -93,8 +46,11 @@ class NormalizedFileMapService {
           }
           this.normalizedMap.delete(eventPath)
         } else if (type === 'create' || type === 'update') {
+          if (this.isIgnored(eventPath)) {
+            this.normalizedMap.delete(eventPath)
+            continue
+          }
           const stats = await fs.stat(eventPath)
-          // Determine the parentPath from an existing node or by computing dirname.
           const oldNode = this.normalizedMap.get(eventPath)
           let computedParentPath: string | undefined
           if (oldNode && oldNode.parentPath) {
@@ -104,15 +60,12 @@ class NormalizedFileMapService {
           }
 
           if (stats.isDirectory()) {
-            // Remove any existing subtree for the directory.
             for (const key of [...this.normalizedMap.keys()]) {
               if (key === eventPath || key.startsWith(eventPath + path.sep)) {
                 this.normalizedMap.delete(key)
               }
             }
-            // Rebuild the entire subtree recursively.
-            await this.recursiveBuild(eventPath, computedParentPath)
-            // Ensure the parent's childPaths include the new directory.
+            await this.buildMapUsingReaddirp(eventPath, computedParentPath)
             if (computedParentPath) {
               const parentNode = this.normalizedMap.get(computedParentPath)
               if (
@@ -123,11 +76,8 @@ class NormalizedFileMapService {
                 parentNode.childPaths.push(eventPath)
               }
             }
-          } else {
-            // For files, build a new file node
+          } else if (stats.isFile()) {
             const newNode = await this.buildFileNode(eventPath, computedParentPath)
-
-            // Update parent's childPaths
             if (computedParentPath) {
               const parentNode = this.normalizedMap.get(computedParentPath)
               if (
@@ -139,6 +89,8 @@ class NormalizedFileMapService {
               }
             }
             this.normalizedMap.set(eventPath, newNode)
+          } else {
+            this.normalizedMap.delete(eventPath)
           }
         }
       } catch (err) {
@@ -146,6 +98,71 @@ class NormalizedFileMapService {
       }
     }
     this.debouncedNotify()
+  }
+
+  private async buildMapUsingReaddirp(dirPath: string, parentPath?: string): Promise<void> {
+    // Make sure there's a node for the root directory of this subtree
+    this.getOrCreateDirectoryNode(dirPath, parentPath)
+
+    // Link it under the parent if parent is provided
+    if (parentPath) {
+      const parentDir = this.getOrCreateDirectoryNode(parentPath)
+      if (!parentDir.childPaths!.includes(dirPath)) {
+        parentDir.childPaths!.push(dirPath)
+      }
+    }
+
+    // Collect files & directories using readdirp
+    for await (const entry of readdirp(dirPath, {
+      type: 'files_directories',
+      alwaysStat: true,
+      fileFilter: (f) => !this.isIgnored(f.fullPath) && (f.stats as import('fs').Stats).isFile(),
+      directoryFilter: (d) =>
+        !this.isIgnored(d.fullPath) && (d.stats as import('fs').Stats).isDirectory()
+    })) {
+      const fullPath = entry.fullPath
+      const stats = entry.stats!
+      // The directory that holds this entry
+      const parent = path.dirname(fullPath) !== dirPath ? path.dirname(fullPath) : dirPath
+
+      if (stats.isDirectory()) {
+        // Create/get the directory node
+        this.getOrCreateDirectoryNode(fullPath, parent)
+        // Also link to parent's childPaths
+        const parentNode = this.getOrCreateDirectoryNode(parent)
+        if (!parentNode.childPaths!.includes(fullPath)) {
+          parentNode.childPaths!.push(fullPath)
+        }
+      } else if (stats.isFile()) {
+        // Create a file node
+        const fileNode = await this.buildFileNode(fullPath, parent)
+        this.normalizedMap.set(fullPath, fileNode)
+        // Link file to parent's childPaths
+        const parentNode = this.getOrCreateDirectoryNode(parent)
+        if (!parentNode.childPaths!.includes(fullPath)) {
+          parentNode.childPaths!.push(fullPath)
+        }
+      }
+    }
+  }
+
+  private getOrCreateDirectoryNode(dirPath: string, parentPath?: string): NormalizedFileNode {
+    const existing = this.normalizedMap.get(dirPath)
+    if (existing && existing.type === 'directory') {
+      if (parentPath && !existing.parentPath) {
+        existing.parentPath = parentPath
+      }
+      return existing
+    }
+    const node: NormalizedFileNode = {
+      path: dirPath,
+      name: path.basename(dirPath),
+      type: 'directory',
+      parentPath,
+      childPaths: []
+    }
+    this.normalizedMap.set(dirPath, node)
+    return node
   }
 
   private async buildFileNode(filePath: string, parentPath?: string): Promise<NormalizedFileNode> {
@@ -159,9 +176,7 @@ class NormalizedFileMapService {
     }
 
     if (!isBin) {
-      // Read file content as UTF-8 text
       const text = await fs.readFile(filePath, 'utf8')
-      // Estimate token count using tiktoken
       const model = 'o1-2024-12-17'
       const encoding = encoding_for_model(model)
       const tokens = encoding.encode(text)
@@ -170,13 +185,34 @@ class NormalizedFileMapService {
     } else {
       fileNode.tokenCount = undefined
     }
-
     return fileNode
   }
 
-  /**
-   * Debounced renderer notification.
-   */
+  private async loadIgnorePatterns(dirPath: string): Promise<void> {
+    try {
+      const gitignorePath = path.join(dirPath, '.gitignore')
+      const data = await fs.readFile(gitignorePath, 'utf8')
+      const lines = data.split('\n')
+      this.ignoredPatterns = lines
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith('#'))
+        .concat(['.git'])
+    } catch {
+      this.ignoredPatterns = []
+    }
+  }
+
+  private isIgnored(targetPath: string): boolean {
+    if (!this.root) {
+      return false
+    }
+    const relativePath = path.relative(this.root, targetPath).replace(/\\/g, '/')
+    return this.ignoredPatterns.some((pattern) => {
+      const normalizedPattern = pattern.replace(/^\/+|\/+$/g, '')
+      return relativePath.includes(normalizedPattern)
+    })
+  }
+
   private debouncedNotify(delay = 500) {
     if (this.notifyTimeout) {
       clearTimeout(this.notifyTimeout)
@@ -186,11 +222,7 @@ class NormalizedFileMapService {
     }, delay)
   }
 
-  /**
-   * Notify the renderer process with the updated normalized map and root.
-   */
   private notifyRenderer() {
-    // Convert the Map into a plain object.
     const normalizedObj = Object.fromEntries(this.normalizedMap)
     const win = BrowserWindow.getAllWindows()[0]
     if (win) {
