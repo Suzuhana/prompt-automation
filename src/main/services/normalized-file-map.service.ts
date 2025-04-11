@@ -5,8 +5,8 @@ import { WatcherEvent } from 'src/common/types/file-watcher-types'
 import { BrowserWindow } from 'electron'
 import { NormalizedDirectoryStructure, NormalizedFileNode } from 'src/common/types/file-tree-types'
 import { CHANNELS } from 'src/common/types/channel-names'
-import { encoding_for_model } from 'tiktoken'
 import { readdirp } from 'readdirp'
+import { estimateTextTokens } from './token-estimator'
 
 class NormalizedFileMapService {
   private normalizedMap: Map<string, NormalizedFileNode> = new Map()
@@ -167,11 +167,8 @@ class NormalizedFileMapService {
       node.isBinary = isBin
       if (!isBin) {
         const text = await fs.readFile(filePath, 'utf8')
-        const model = 'o1-2024-12-17'
-        const encoding = encoding_for_model(model)
-        const tokens = encoding.encode(text)
-        node.tokenCount = tokens.length
-        encoding.free()
+        // Use fast token estimation instead of expensive tokenization via tiktoken.
+        node.tokenCount = estimateTextTokens(text)
       } else {
         node.tokenCount = undefined
       }
