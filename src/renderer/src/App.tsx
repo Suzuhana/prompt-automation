@@ -20,7 +20,7 @@ function App(): JSX.Element {
         <ResizablePanel minSize={20} className="flex flex-col gap-4">
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={50} minSize={20} className="p-3 flex flex-col gap-2">
-              <h2 className="text-xl font-semibold">Instructions</h2>
+              <h2 className="text-l font-semibold">Instructions</h2>
               <Textarea
                 placeholder="Enter text here..."
                 className="flex-grow resize-none" // flex-grow makes it expand, resize-none disables manual resizing handle

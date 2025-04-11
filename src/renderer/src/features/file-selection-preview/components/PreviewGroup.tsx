@@ -1,15 +1,11 @@
 import { File, Folder, Trash } from 'lucide-react'
+import { PreviewFile } from '../hooks/useGroupedSelectedFiles'
+import { formatTokenSize } from '../utils/formatTokenSize'
 
 interface PreviewDirectoryGroupProps {
   directoryPath: string
   files: PreviewFile[]
   onDeselect: (path: string) => void
-}
-
-interface PreviewFile {
-  path: string
-  name: string
-  tokenSize: number
 }
 
 export function PreviewDirectoryGroup({
@@ -19,9 +15,9 @@ export function PreviewDirectoryGroup({
 }: PreviewDirectoryGroupProps) {
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="bg-blue-500/30 flex flex-row items-center rounded-sm px-2">
+      <div className="bg-blue-500/15 flex flex-row items-center rounded-sm px-2">
         <Folder size={16} className="mr-2 text-blue-500" />
-        <p>{directoryPath}</p>
+        <p className="font-semibold">{directoryPath}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         {files.map((file) => (
@@ -32,9 +28,9 @@ export function PreviewDirectoryGroup({
             <div className="flex-grow flex flex-col items-start">
               <div className="flex flex-row items-center">
                 <File size={16} className="mr-2 text-gray-500" />
-                <p>{file.name}</p>
+                <p className="font-normal">{file.name}</p>
               </div>
-              <p>{file.tokenSize}</p>
+              <p className="text-xs text-gray-400">{formatTokenSize(file.tokenSize)}</p>
             </div>
             <div
               onClick={() => {
