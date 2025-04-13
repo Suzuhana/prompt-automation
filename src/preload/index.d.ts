@@ -1,13 +1,10 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { FileSystemAPI, PromptAPI } from './preload-api.types'
+import { api } from './api'
 
 declare global {
   interface Window {
     electron: ElectronAPI
-    api: {
-      fileSystem: FileSystemAPI
-      prompt: PromptAPI
-    }
+    api: typeof api
   }
 }
 

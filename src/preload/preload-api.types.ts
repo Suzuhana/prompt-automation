@@ -2,7 +2,6 @@ import { NormalizedDirectoryStructure } from '../common/types/file-tree-types'
 import { DirectoryChangedData } from '../common/types/file-watcher-types'
 import { CreatePromptRequest } from '../common/types/prompt-types'
 
-// Interface for FileSystemAPI
 export interface FileSystemAPI {
   openFileDialog: (options: Electron.OpenDialogOptions) => Promise<string | null>
   watchDirectory: (directory: string) => Promise<string>
@@ -19,4 +18,8 @@ export interface FileSystemAPI {
 
 export interface PromptAPI {
   createPrompt: (request: CreatePromptRequest) => Promise<string>
+}
+
+export interface ClipboardAPI {
+  sendToClipboard: (text: string) => Promise<boolean>
 }

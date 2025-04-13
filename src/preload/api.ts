@@ -1,6 +1,6 @@
 import { ipcRenderer } from 'electron'
 import { CHANNELS } from 'src/common/types/channel-names'
-import { FileSystemAPI } from 'src/preload/preload-api.types'
+import { ClipboardAPI, FileSystemAPI, PromptAPI } from 'src/preload/preload-api.types'
 import { CreatePromptRequest } from 'src/common/types/prompt-types'
 
 export const fileSystemAPI: FileSystemAPI = {
@@ -28,7 +28,17 @@ export const fileSystemAPI: FileSystemAPI = {
     ipcRenderer.invoke(CHANNELS.FILE_SYSTEM_READ_FILE_CONTENTS, filePaths)
 }
 
-export const promptAPI = {
+export const promptAPI: PromptAPI = {
   createPrompt: (request: CreatePromptRequest) =>
     ipcRenderer.invoke(CHANNELS.PROMPT_CREATE, request)
+}
+
+export const clipboardAPI: ClipboardAPI = {
+  sendToClipboard: (text: string) => ipcRenderer.invoke(CHANNELS.CLIPBOARD_SEND, text)
+}
+
+export const api = {
+  fileSystem: fileSystemAPI,
+  prompt: promptAPI,
+  clipboard: clipboardAPI
 }

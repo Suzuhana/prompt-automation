@@ -6,5 +6,6 @@ export const CHANNELS = {
   FILE_WATCHER_DIRECTORY_CHANGED: 'file-watcher:directory-changed',
   NORMALIZED_DIRECTORY_CHANGED: 'normalized-directory-changed',
   FILE_SYSTEM_READ_FILE_CONTENTS: 'file-system:read-file-contents',
-  PROMPT_CREATE: 'prompt:create'
+  PROMPT_CREATE: 'prompt:create',
+  CLIPBOARD_SEND: 'clipboard:send'
 }

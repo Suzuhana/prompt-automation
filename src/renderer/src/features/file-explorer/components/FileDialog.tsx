@@ -56,13 +56,19 @@ export function FileDialog() {
                   userInstruction: instructions.trim()
                 })
                 .then((prompt) => {
-                  console.log('Generated prompt: \n', prompt)
-                  toast('Prompt generated and copied to clipboard', {
-                    action: {
-                      label: 'DISMISS',
-                      onClick: () => {}
-                    }
-                  })
+                  window.api.clipboard
+                    .sendToClipboard(prompt)
+                    .then(() => {
+                      toast('Prompt generated and copied to clipboard', {
+                        action: {
+                          label: 'DISMISS',
+                          onClick: () => {}
+                        }
+                      })
+                    })
+                    .catch((err) => {
+                      console.error('Error sending prompt to clipboard:', err)
+                    })
                 })
                 .catch((err) => {
                   console.error('Error generating prompt:', err)
