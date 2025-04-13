@@ -1,6 +1,7 @@
 import { ipcMain, dialog } from 'electron'
 import normalizedFileMapService from '../services/normalized-file-map.service'
 import { CHANNELS } from 'src/common/types/channel-names'
+import { readFilesAsStrings } from '../services/file-reader.service'
 
 /**
  * Initialize IPC handlers specific to file system actions
@@ -31,6 +32,14 @@ export function initFileSystemIPC(): void {
       }
     }
   )
+  ipcMain.handle(CHANNELS.FILE_SYSTEM_READ_FILE_CONTENTS, async (_event, filePaths: string[]) => {
+    try {
+      return await readFilesAsStrings(filePaths)
+    } catch (error) {
+      console.error('Error in read-file-contents handler:', error)
+      throw error
+    }
+  })
 }
 
 /**
@@ -39,4 +48,5 @@ export function initFileSystemIPC(): void {
 export function removeFileSystemIPC(): void {
   ipcMain.removeHandler(CHANNELS.FILE_SYSTEM_OPEN_DIALOG)
   ipcMain.removeHandler(CHANNELS.FILE_SYSTEM_GET_NORMALIZED_DIRECTORY_STRUCTURE)
+  ipcMain.removeHandler(CHANNELS.FILE_SYSTEM_READ_FILE_CONTENTS)
 }

@@ -44,11 +44,19 @@ export function FileDialog() {
         <div className="mt-auto flex justify-end">
           <Button
             onClick={() => {
-              // Example action: Log selected file paths
               const selectedPaths = Object.values(entities)
-                .filter((node) => node.selected === true)
+                .filter((node) => node.selected === true && node.type == 'file')
                 .map((node) => node.path)
-              console.log('Processing selected paths:', selectedPaths)
+
+              // NEW: Invoke the IPC call to read file contents, then log the result
+              window.api.fileSystem
+                .readFileContents(selectedPaths)
+                .then((result) => {
+                  console.log('File contents:', result)
+                })
+                .catch((err) => {
+                  console.error('Error reading file contents:', err)
+                })
             }}
           >
             Process Selected ({selectedCount})

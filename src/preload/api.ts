@@ -22,5 +22,7 @@ export const fileSystemAPI: FileSystemAPI = {
   },
   cancelSubNormalizedDirectoryChanged: () => {
     ipcRenderer.off(CHANNELS.NORMALIZED_DIRECTORY_CHANGED, () => {})
-  }
+  },
+  readFileContents: (filePaths) =>
+    ipcRenderer.invoke(CHANNELS.FILE_SYSTEM_READ_FILE_CONTENTS, filePaths)
 }

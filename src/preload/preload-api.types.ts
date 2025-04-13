@@ -14,6 +14,7 @@ export interface FileSystemAPI {
     callback: (data: NormalizedDirectoryStructure) => void
   ) => void
   cancelSubNormalizedDirectoryChanged: () => void
+  readFileContents: (filePaths: string[]) => Promise<Record<string, string>>
 }
 
 // Optionally, if you have more “groups” of APIs later (like authAPI, settingsAPI),
