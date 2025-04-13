@@ -1,5 +1,6 @@
 import { initFileSystemIPC, removeFileSystemIPC } from './file-system.ipc'
 import { initFileWatcherIPC, removeFileWatcherIPC } from './file-watcher.ipc'
+import { initPromptIPC, removePromptIPC } from './prompt.ipc'
 
 /**
  * Register all IPC handlers for the main process
@@ -7,6 +8,7 @@ import { initFileWatcherIPC, removeFileWatcherIPC } from './file-watcher.ipc'
 export function setupIpcHandlers(): void {
   initFileSystemIPC()
   initFileWatcherIPC()
+  initPromptIPC()
 }
 
 /**
@@ -16,4 +18,5 @@ export function removeIpcHandlers(): void {
   // Remove file system IPC
   removeFileSystemIPC()
   removeFileWatcherIPC()
+  removePromptIPC()
 }

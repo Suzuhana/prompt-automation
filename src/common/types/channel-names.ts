@@ -5,5 +5,6 @@ export const CHANNELS = {
   FILE_WATCHER_STOP_DIRECTORY: 'file-watcher:stop-watch-directory',
   FILE_WATCHER_DIRECTORY_CHANGED: 'file-watcher:directory-changed',
   NORMALIZED_DIRECTORY_CHANGED: 'normalized-directory-changed',
-  FILE_SYSTEM_READ_FILE_CONTENTS: 'file-system:read-file-contents'
+  FILE_SYSTEM_READ_FILE_CONTENTS: 'file-system:read-file-contents',
+  PROMPT_CREATE: 'prompt:create'
 }

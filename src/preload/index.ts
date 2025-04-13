@@ -1,10 +1,11 @@
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { fileSystemAPI } from './api'
+import { fileSystemAPI, promptAPI } from './api'
 
 // Custom APIs for renderer
 const api = {
-  fileSystem: fileSystemAPI
+  fileSystem: fileSystemAPI,
+  prompt: promptAPI
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

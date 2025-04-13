@@ -1,6 +1,6 @@
-// src/common/types/preload-api.types.ts
 import { NormalizedDirectoryStructure } from '../common/types/file-tree-types'
 import { DirectoryChangedData } from '../common/types/file-watcher-types'
+import { CreatePromptRequest } from '../common/types/prompt-types'
 
 // Interface for FileSystemAPI
 export interface FileSystemAPI {
@@ -17,5 +17,6 @@ export interface FileSystemAPI {
   readFileContents: (filePaths: string[]) => Promise<Record<string, string>>
 }
 
-// Optionally, if you have more “groups” of APIs later (like authAPI, settingsAPI),
-// define them here too and export a single “API” interface that merges them.
+export interface PromptAPI {
+  createPrompt: (request: CreatePromptRequest) => Promise<string>
+}

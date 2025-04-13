@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 export function FileDialog() {
   const { rootPath, isLoading, openFileDialog } = useFileDialog()
   const entities = useAppStore((state) => state.entities)
+  const instructions = useAppStore((state) => state.instructions)
   const selectedCount = Object.values(entities).filter((node) => node.selected === true).length
 
   return (
@@ -46,14 +47,16 @@ export function FileDialog() {
           <Button
             onClick={() => {
               const selectedPaths = Object.values(entities)
-                .filter((node) => node.selected === true && node.type == 'file')
+                .filter((node) => node.selected === true && node.type === 'file')
                 .map((node) => node.path)
 
-              // NEW: Invoke the IPC call to read file contents, then log the result
-              window.api.fileSystem
-                .readFileContents(selectedPaths)
-                .then((result) => {
-                  console.log('File contents:', result)
+              window.api.prompt
+                .createPrompt({
+                  selectedFilePaths: selectedPaths,
+                  userInstruction: instructions.trim()
+                })
+                .then((prompt) => {
+                  console.log('Generated prompt: \n', prompt)
                   toast('Prompt generated and copied to clipboard', {
                     action: {
                       label: 'DISMISS',
@@ -62,7 +65,7 @@ export function FileDialog() {
                   })
                 })
                 .catch((err) => {
-                  console.error('Error reading file contents:', err)
+                  console.error('Error generating prompt:', err)
                 })
             }}
           >

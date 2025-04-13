@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron'
 import { CHANNELS } from 'src/common/types/channel-names'
 import { FileSystemAPI } from 'src/preload/preload-api.types'
+import { CreatePromptRequest } from 'src/common/types/prompt-types'
 
 export const fileSystemAPI: FileSystemAPI = {
   openFileDialog: (options) => ipcRenderer.invoke(CHANNELS.FILE_SYSTEM_OPEN_DIALOG, options),
@@ -8,7 +9,7 @@ export const fileSystemAPI: FileSystemAPI = {
     ipcRenderer.invoke(CHANNELS.FILE_WATCHER_START_DIRECTORY, directory),
   stopWatchDirectory: (watchId) =>
     ipcRenderer.invoke(CHANNELS.FILE_WATCHER_STOP_DIRECTORY, watchId),
-  //this is used for logging purpose only
+  // this is used for logging purpose only
   subscriptToDirectoryChanged: (callback) => {
     ipcRenderer.on(CHANNELS.FILE_WATCHER_DIRECTORY_CHANGED, (_event, data) => callback(data))
   },
@@ -25,4 +26,9 @@ export const fileSystemAPI: FileSystemAPI = {
   },
   readFileContents: (filePaths) =>
     ipcRenderer.invoke(CHANNELS.FILE_SYSTEM_READ_FILE_CONTENTS, filePaths)
+}
+
+export const promptAPI = {
+  createPrompt: (request: CreatePromptRequest) =>
+    ipcRenderer.invoke(CHANNELS.PROMPT_CREATE, request)
 }
