@@ -3,6 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { FileTree } from './FileTree'
 import { useFileDialog } from '../hook/useFileDialog'
 import { useAppStore } from '@renderer/store'
+import { toast } from 'sonner'
 
 export function FileDialog() {
   const { rootPath, isLoading, openFileDialog } = useFileDialog()
@@ -53,13 +54,19 @@ export function FileDialog() {
                 .readFileContents(selectedPaths)
                 .then((result) => {
                   console.log('File contents:', result)
+                  toast('Prompt generated and copied to clipboard', {
+                    action: {
+                      label: 'DISMISS',
+                      onClick: () => {}
+                    }
+                  })
                 })
                 .catch((err) => {
                   console.error('Error reading file contents:', err)
                 })
             }}
           >
-            Process Selected ({selectedCount})
+            Prompt Generation ({selectedCount})
           </Button>
         </div>
       )}
