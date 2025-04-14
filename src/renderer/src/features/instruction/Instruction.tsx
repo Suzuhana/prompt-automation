@@ -1,105 +1,80 @@
+import { useEffect, Fragment, useRef } from 'react'
 import { Textarea } from '@renderer/components/ui/textarea'
-import { Fragment } from 'react/jsx-runtime'
 import { useAppStore } from '@renderer/store'
 import { BadgeWithActions } from '@renderer/components/ui/BadgeWithActions'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, Plus } from 'lucide-react'
 import { Button } from '@renderer/components/ui/button'
-import { Plus } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger
-} from '@renderer/components/ui/dialog'
-import { Label } from '@renderer/components/ui/label'
-import { Input } from '@renderer/components/ui/input'
+import { PromptDialog, PromptDialogHandle } from './PromptDialog'
+import { Prompt } from 'src/common/types/prompt-types'
 
 export function Instruction() {
   const instructions = useAppStore((state) => state.instructions)
   const setInstructions = useAppStore((state) => state.setInstructions)
+  const prompts = useAppStore((state) => state.prompts)
+  const addPrompt = useAppStore((state) => state.addPrompt)
+  const removePrompt = useAppStore((state) => state.removePrompt)
+  const editPrompt = useAppStore((state) => state.editPrompt)
+  const loadPrompts = useAppStore((state) => state.loadPrompts)
+
+  const promptDialogRef = useRef<PromptDialogHandle>(null)
+
+  useEffect(() => {
+    loadPrompts()
+  }, [loadPrompts])
+
+  const handleSavePrompt = async ({
+    mode,
+    promptData,
+    name,
+    type,
+    content
+  }: {
+    mode: 'create' | 'edit'
+    promptData?: Prompt
+    name: string
+    type: string
+    content: string
+  }) => {
+    if (mode === 'create') {
+      await addPrompt(name, type, content)
+    } else if (promptData) {
+      // For edit mode, use the old prompt name to locate the prompt to update.
+      await editPrompt(promptData.name, name, type, content)
+    }
+  }
 
   return (
     <Fragment>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between h-6">
         <div className="flex flex-row gap-2 items-center">
           <h2 className="text-l font-semibold">Instructions</h2>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-6 h-6">
-                <Plus />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create Prompt</DialogTitle>
-                <DialogDescription>
-                  Create your prompt here. Click save when you&apos;re done
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="promptname" className="text-right">
-                    Prompt Name
-                  </Label>
-                  <Input id="promptname" value="Engineer" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="prompttype" className="text-right">
-                    Prompt Type
-                  </Label>
-                  <Input id="prompttype" value="meta-prompt" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-start gap-4">
-                  <Label htmlFor="promptcontent" className="text-right">
-                    Prompt Content
-                  </Label>
-                  <Textarea
-                    id="promptcontent"
-                    placeholder="Enter prompt content here..."
-                    className="flex-grow resize-none"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit">Save changes</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button
+            variant="outline"
+            className="w-6 h-6"
+            onClick={() => promptDialogRef.current?.openDialog('create')}
+          >
+            <Plus />
+          </Button>
         </div>
         <div className="flex flex-row gap-2">
-          <BadgeWithActions
-            label="Custom Prompt"
-            actions={[
-              {
-                label: 'Edit',
-                onClick: () => console.log('Edit clicked'),
-                icon: <Edit size={12} />
-              },
-              {
-                label: 'Remove',
-                onClick: () => console.log('Remove clicked'),
-                icon: <Trash2 size={12} />
-              }
-            ]}
-          />
-          <BadgeWithActions
-            label="Custom Prompt"
-            actions={[
-              {
-                label: 'Edit',
-                onClick: () => console.log('Edit clicked'),
-                icon: <Edit size={12} />
-              },
-              {
-                label: 'Remove',
-                onClick: () => console.log('Remove clicked'),
-                icon: <Trash2 size={12} />
-              }
-            ]}
-          />
+          {prompts.map((prompt, index) => (
+            <BadgeWithActions
+              key={index}
+              label={prompt.name}
+              actions={[
+                {
+                  label: 'Edit',
+                  onClick: () => promptDialogRef.current?.openDialog('edit', prompt),
+                  icon: <Edit size={12} />
+                },
+                {
+                  label: 'Remove',
+                  onClick: async () => await removePrompt(prompt.name),
+                  icon: <Trash2 size={12} />
+                }
+              ]}
+            />
+          ))}
         </div>
       </div>
       <Textarea
@@ -108,6 +83,7 @@ export function Instruction() {
         placeholder="Enter user instruction here..."
         className="flex-grow resize-none"
       />
+      <PromptDialog ref={promptDialogRef} onSave={handleSavePrompt} />
     </Fragment>
   )
 }

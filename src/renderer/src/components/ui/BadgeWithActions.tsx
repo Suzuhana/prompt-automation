@@ -76,7 +76,7 @@ export const BadgeWithActions: React.FC<BadgeWithActionsProps> = ({
 }
 
 const actionButtonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium focus:outline-none focus:ring-1 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 transition-[color,box-shadow]',
+  'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium focus:outline-none disabled:pointer-events-none disabled:opacity-50 transition-[color,box-shadow]',
   {
     variants: {
       variant: {
@@ -86,7 +86,7 @@ const actionButtonVariants = cva(
       },
       size: {
         default: 'h-9 px-2 min-w-9',
-        xs: 'h-7 px-1 min-w-7',
+        xs: 'h-6 px-1 min-w-7',
         sm: 'h-8 px-1.5 min-w-8',
         lg: 'h-10 px-2.5 min-w-10'
       }
@@ -117,6 +117,7 @@ export const CustomActionButton: React.FC<CustomActionButtonProps> = ({
   return (
     <button
       {...props}
+      tabIndex={-1}
       aria-label={label}
       className={cn(actionButtonVariants({ variant, size, className }))}
     >
