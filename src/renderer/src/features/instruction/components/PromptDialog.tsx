@@ -25,6 +25,8 @@ export interface PromptDialogProps {
     type: string
     content: string
   }) => void
+  // NEW: Add the existingPrompts prop for duplicate validation
+  existingPrompts: Prompt[]
 }
 
 export const PromptDialog = forwardRef<PromptDialogHandle, PromptDialogProps>((props, ref) => {
@@ -34,6 +36,8 @@ export const PromptDialog = forwardRef<PromptDialogHandle, PromptDialogProps>((p
   const [name, setName] = useState('')
   const [type, setType] = useState('')
   const [content, setContent] = useState('')
+  // NEW: Add error state to store validation error messages
+  const [error, setError] = useState('')
 
   useImperativeHandle(ref, () => ({
     openDialog: (dialogMode: 'create' | 'edit', data?: Prompt) => {
@@ -49,11 +53,34 @@ export const PromptDialog = forwardRef<PromptDialogHandle, PromptDialogProps>((p
         setType('')
         setContent('')
       }
+      // Clear any previous errors when opening the dialog
+      setError('')
       setOpen(true)
     }
   }))
 
   const handleSave = async () => {
+    // Validate empty fields
+    if (!name.trim() || !type.trim() || !content.trim()) {
+      setError('All fields are required.')
+      return
+    }
+    // Validate for duplicate prompt names
+    if (mode === 'create') {
+      const duplicate = props.existingPrompts.find((p) => p.name === name)
+      if (duplicate) {
+        setError('Prompt name already exists. Please choose a different name.')
+        return
+      }
+    } else if (mode === 'edit' && promptData && promptData.name !== name) {
+      const duplicate = props.existingPrompts.find((p) => p.name === name)
+      if (duplicate) {
+        setError('Prompt name already exists. Please choose a different name.')
+        return
+      }
+    }
+
+    setError('')
     props.onSave({ mode, promptData, name, type, content })
     setOpen(false)
   }
@@ -104,6 +131,7 @@ export const PromptDialog = forwardRef<PromptDialogHandle, PromptDialogProps>((p
               className="col-span-3 w-full h-32 resize-none"
             />
           </div>
+          {error && <p className="text-sm text-destructive mt-1">{error}</p>}
         </div>
         <DialogFooter>
           <Button type="button" onClick={handleSave}>
@@ -115,4 +143,4 @@ export const PromptDialog = forwardRef<PromptDialogHandle, PromptDialogProps>((p
   )
 })
 
-PromptDialog.displayName = 'PropmtDialog'
+PromptDialog.displayName = 'PromptDialog'

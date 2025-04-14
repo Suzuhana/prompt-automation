@@ -3,7 +3,7 @@ import { useFileWatcherSubscription } from './features/file-watcher/hook/useFile
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
 import { FileSelectionPreview } from './features/file-selection-preview/components/FileSelectionPreview'
 import { Toaster } from './components/ui/sonner'
-import { Instruction } from './features/instruction/Instruction'
+import { Instruction } from './features/instruction/components/Instruction'
 
 function App(): JSX.Element {
   useFileWatcherSubscription()
