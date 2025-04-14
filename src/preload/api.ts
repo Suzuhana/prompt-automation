@@ -1,6 +1,11 @@
 import { ipcRenderer } from 'electron'
 import { CHANNELS } from 'src/common/types/channel-names'
-import { ClipboardAPI, FileSystemAPI, PromptAPI } from 'src/preload/preload-api.types'
+import {
+  ClipboardAPI,
+  FileBasedStoreAPI,
+  FileSystemAPI,
+  PromptAPI
+} from 'src/preload/preload-api.types'
 import { CreatePromptRequest } from 'src/common/types/prompt-types'
 
 export const fileSystemAPI: FileSystemAPI = {
@@ -37,8 +42,21 @@ export const clipboardAPI: ClipboardAPI = {
   sendToClipboard: (text: string) => ipcRenderer.invoke(CHANNELS.CLIPBOARD_SEND, text)
 }
 
+export const fileBasedStoreAPI: FileBasedStoreAPI = {
+  get: async (key: string) => {
+    return ipcRenderer.invoke(CHANNELS.FILE_BASED_STORE_GET, key)
+  },
+  set: async (key: string, value: unknown) => {
+    await ipcRenderer.invoke(CHANNELS.FILE_BASED_STORE_SET, { key, value })
+  },
+  delete: async (key: string) => {
+    await ipcRenderer.invoke(CHANNELS.FILE_BASED_STORE_DELETE, key)
+  }
+}
+
 export const api = {
   fileSystem: fileSystemAPI,
   prompt: promptAPI,
-  clipboard: clipboardAPI
+  clipboard: clipboardAPI,
+  fileBasedStore: fileBasedStoreAPI
 }

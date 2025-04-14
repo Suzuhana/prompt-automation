@@ -7,5 +7,8 @@ export const CHANNELS = {
   NORMALIZED_DIRECTORY_CHANGED: 'normalized-directory-changed',
   FILE_SYSTEM_READ_FILE_CONTENTS: 'file-system:read-file-contents',
   PROMPT_CREATE: 'prompt:create',
-  CLIPBOARD_SEND: 'clipboard:send'
+  CLIPBOARD_SEND: 'clipboard:send',
+  FILE_BASED_STORE_GET: 'file-based-store:get',
+  FILE_BASED_STORE_SET: 'file-based-store:set',
+  FILE_BASED_STORE_DELETE: 'file-based-store:delete'
 }
