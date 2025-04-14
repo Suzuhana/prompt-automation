@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { cva, type VariantProps } from 'class-variance-authority'
 
 type Action = {
   label?: string
@@ -42,7 +43,7 @@ export const BadgeWithActions: React.FC<BadgeWithActionsProps> = ({
   return (
     <div
       className={cn(
-        'inline-flex items-center border rounded bg-primary text-primary-foreground border-transparent overflow-hidden transition-all duration-300 ease-in-out',
+        'inline-flex items-center border rounded-md bg-primary text-primary-foreground border-transparent overflow-hidden transition-all duration-300 ease-in-out',
         className
       )}
       style={{ width: containerWidth || 'auto' }}
@@ -56,7 +57,7 @@ export const BadgeWithActions: React.FC<BadgeWithActionsProps> = ({
       <div
         ref={actionsRef}
         className={cn(
-          'flex items-center pr-0.5 gap-1 ml-2 transition-all duration-300 ease-in-out',
+          'flex items-center gap-1 ml-2 transition-all duration-300 ease-in-out',
           hovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
         )}
       >
@@ -64,6 +65,7 @@ export const BadgeWithActions: React.FC<BadgeWithActionsProps> = ({
           <CustomActionButton
             key={index}
             onClick={action.onClick}
+            size={'xs'}
             label={action.label}
             icon={action.icon} // Forward the icon prop
           />
@@ -73,7 +75,33 @@ export const BadgeWithActions: React.FC<BadgeWithActionsProps> = ({
   )
 }
 
-export interface CustomActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+const actionButtonVariants = cva(
+  'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium focus:outline-none focus:ring-1 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 transition-[color,box-shadow]',
+  {
+    variants: {
+      variant: {
+        default: 'bg-transparent hover:bg-muted hover:text-muted-foreground',
+        outline:
+          'border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground'
+      },
+      size: {
+        default: 'h-9 px-2 min-w-9',
+        xs: 'h-7 px-1 min-w-7',
+        sm: 'h-8 px-1.5 min-w-8',
+        lg: 'h-10 px-2.5 min-w-10'
+      }
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default'
+    }
+  }
+)
+
+// MODIFIED: Extend the button props to include variant and size.
+export interface CustomActionButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof actionButtonVariants> {
   label?: string
   icon?: React.ReactNode
 }
@@ -81,6 +109,8 @@ export interface CustomActionButtonProps extends React.ButtonHTMLAttributes<HTML
 export const CustomActionButton: React.FC<CustomActionButtonProps> = ({
   label,
   icon,
+  variant,
+  size,
   className,
   ...props
 }) => {
@@ -88,15 +118,7 @@ export const CustomActionButton: React.FC<CustomActionButtonProps> = ({
     <button
       {...props}
       aria-label={label}
-      className={cn(
-        // Base styling with reversed colors from the badge.
-        'inline-flex items-center justify-center rounded text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary',
-        'px-1 py-0.5',
-        'bg-primary-foreground text-primary',
-        // Added hover/unhover visual effects.
-        'transform transition duration-200 ease-in-out hover:scale-105 hover:shadow-md',
-        className
-      )}
+      className={cn(actionButtonVariants({ variant, size, className }))}
     >
       {icon}
     </button>
