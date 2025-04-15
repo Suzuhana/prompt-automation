@@ -13,11 +13,16 @@ export function PreviewDirectoryGroup({
   files,
   onDeselect
 }: PreviewDirectoryGroupProps) {
+  const totalTokens = files.reduce((acc, file) => acc + file.tokenSize, 0)
+
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="bg-gray-200 flex flex-row items-center rounded-sm px-2">
-        <Folder size={16} className="mr-2 text-blue-500" />
-        <p className="font-semibold">{directoryPath}</p>
+      <div className="bg-gray-200 flex flex-row items-center justify-between rounded-sm px-2">
+        <div className="flex items-center">
+          <Folder size={16} className="mr-2 text-blue-500" />
+          <p className="font-semibold">{directoryPath}</p>
+        </div>
+        <p className="text-sm font-semibold">{formatTokenSize(totalTokens)}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         {files.map((file) => (
