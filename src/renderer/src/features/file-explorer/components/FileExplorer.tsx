@@ -8,67 +8,14 @@ import { FileTree } from './FileTree'
 import { useFileDialog } from '../hook/useFileDialog'
 import { useAppStore } from '@renderer/store'
 import { useFileSearch } from '../hook/useFileSearch'
-
-/* --------------------------------------------------------------------------
-   Helper Functions
--------------------------------------------------------------------------- */
-
-/**
- * Computes expansion states for all directories based on matched node paths.
- */
-function computeSearchExpansions(
-  matchedNodePaths: Set<string>,
-  allEntities: { [path: string]: NormalizedFileNode }
-): { [path: string]: boolean } {
-  const expansions: { [path: string]: boolean } = {}
-
-  // Initialize all expansion states to false.
-  Object.keys(allEntities).forEach((path) => {
-    expansions[path] = false
-  })
-
-  // Helper function to expand all ancestors of a file node.
-  const expandAncestors = (nodePath: string) => {
-    let currentPath = nodePath
-    while (true) {
-      const current = allEntities[currentPath]
-      if (!current || !current.parentPath) break
-      expansions[current.parentPath] = true
-      currentPath = current.parentPath
-    }
-  }
-
-  matchedNodePaths.forEach((path) => {
-    const node = allEntities[path]
-    if (node?.type === 'directory') {
-      expansions[path] = true
-    } else if (node?.type === 'file') {
-      expandAncestors(path)
-    }
-  })
-
-  return expansions
-}
-
-/**
- * Performs a shallow equality check on two expansion state objects.
- */
-function shallowEqual(objA: { [k: string]: boolean }, objB: { [k: string]: boolean }): boolean {
-  if (objA === objB) return true
-  const aKeys = Object.keys(objA)
-  const bKeys = Object.keys(objB)
-  if (aKeys.length !== bKeys.length) return false
-  for (const key of aKeys) {
-    if (objA[key] !== objB[key]) {
-      return false
-    }
-  }
-  return true
-}
-
-/* --------------------------------------------------------------------------
-   Main Component
--------------------------------------------------------------------------- */
+import { Search } from 'lucide-react'
+import { Toggle } from '@/components/ui/toggle'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@renderer/components/ui/tooltip'
 
 export function FileExplorer() {
   const { rootPath, isLoading, openFileDialog } = useFileDialog()
@@ -83,7 +30,7 @@ export function FileExplorer() {
   // Preserve pre-search expansion states for when the query is cleared.
   const previousExpansionsRef = useRef<{ [path: string]: boolean } | null>(null)
 
-  // Get the set of allowed (visible) node paths for the current search
+  // Get the set of allowed (visible) node paths for the current search.
   const { allowedNodePaths } = useFileSearch({
     query: searchQuery,
     fuzzy: fuzzySearch,
@@ -154,31 +101,45 @@ export function FileExplorer() {
   }, [entities, instructions])
 
   return (
-    <div className="flex flex-col h-full w-full p-4 gap-4">
-      {/* Controls: Directory selection, search input, and fuzzy toggle */}
+    <div className="flex flex-col h-full w-full p-4 gap-1">
+      {/* Directory selection row */}
       <div className="flex space-x-4 items-center">
         <Button onClick={() => openFileDialog('directory')} disabled={isLoading} variant="default">
           Select Directory
         </Button>
+      </div>
 
-        <Input
-          type="text"
-          placeholder="Search..."
-          className="border px-2 py-1 rounded text-sm"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-
-        <div className="flex items-center space-x-2">
-          <label htmlFor="fuzzyToggle" className="text-sm">
-            Fuzzy
-          </label>
-          <input
-            id="fuzzyToggle"
-            type="checkbox"
-            checked={fuzzySearch}
-            onChange={(e) => setFuzzySearch(e.target.checked)}
+      {/* Search input row */}
+      <div className="flex space-x-4 items-center">
+        <div className="relative w-full">
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            size={16}
           />
+          <Input
+            type="text"
+            placeholder="Search..."
+            className="pl-10 pr-12 py-1 rounded text-sm w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle
+                  className="absolute right-0.5 top-1/2 transform -translate-y-1/2"
+                  size={'sm'}
+                  pressed={fuzzySearch}
+                  onClick={() => setFuzzySearch((prev) => !prev)}
+                >
+                  F
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle fuzzy search</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -210,4 +171,51 @@ export function FileExplorer() {
       )}
     </div>
   )
+}
+
+function computeSearchExpansions(
+  matchedNodePaths: Set<string>,
+  allEntities: { [path: string]: NormalizedFileNode }
+): { [path: string]: boolean } {
+  const expansions: { [path: string]: boolean } = {}
+
+  // Initialize all expansion states to false.
+  Object.keys(allEntities).forEach((path) => {
+    expansions[path] = false
+  })
+
+  // Helper function to expand all ancestors of a file node.
+  const expandAncestors = (nodePath: string) => {
+    let currentPath = nodePath
+    while (true) {
+      const current = allEntities[currentPath]
+      if (!current || !current.parentPath) break
+      expansions[current.parentPath] = true
+      currentPath = current.parentPath
+    }
+  }
+
+  matchedNodePaths.forEach((path) => {
+    const node = allEntities[path]
+    if (node?.type === 'directory') {
+      expansions[path] = true
+    } else if (node?.type === 'file') {
+      expandAncestors(path)
+    }
+  })
+
+  return expansions
+}
+
+function shallowEqual(objA: { [k: string]: boolean }, objB: { [k: string]: boolean }): boolean {
+  if (objA === objB) return true
+  const aKeys = Object.keys(objA)
+  const bKeys = Object.keys(objB)
+  if (aKeys.length !== bKeys.length) return false
+  for (const key of aKeys) {
+    if (objA[key] !== objB[key]) {
+      return false
+    }
+  }
+  return true
 }
