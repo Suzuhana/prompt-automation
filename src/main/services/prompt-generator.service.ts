@@ -2,7 +2,7 @@ import * as path from 'path'
 import { readFilesAsStrings } from './file-reader.service'
 import { CreatePromptRequest, Prompt } from 'src/common/types/prompt-types'
 import { fileBasedStoreService } from './file-based-store.service'
-
+import normalizedFileMapService from './normalized-file-map.service'
 /**
  * Service responsible for assembling prompt content.
  * Designed to be extensible for future sections/requirements.
@@ -10,16 +10,25 @@ import { fileBasedStoreService } from './file-based-store.service'
 export const promptGeneratorService = {
   /**
    * Creates a prompt consisting of:
-   * 1. <file_contents> section (for each file in selectedFilePaths)
-   * 2. <prompts> section (reads Prompt[] from file-backed store)
-   * 3. <user_instructions> section (from user input)
+   * 1. <file_map> section (contains file tree of the project)
+   * 2. <file_contents> section (for each file in selectedFilePaths)
+   * 3. <prompts> section (reads Prompt[] from file-backed store)
+   * 4. <user_instructions> section (from user input)
    */
   async createPrompt(request: CreatePromptRequest): Promise<string> {
+    // Step 0: Get the file tree (lazy initialization if needed)
+    const fileTree = await normalizedFileMapService.getFileTree()
+
+    const promptSections: string[] = []
+    promptSections.push('<file_map>')
+    promptSections.push(fileTree)
+    promptSections.push('</file_map>')
+    promptSections.push('') // Blank line for separation
+
     // Step 1: Read all selected files
     const filesMap = await readFilesAsStrings(request.selectedFilePaths)
 
     // Step 2: Build the file_contents section
-    const promptSections: string[] = []
     promptSections.push('<file_contents>')
     for (let i = 0; i < request.selectedFilePaths.length; i++) {
       const filePath = request.selectedFilePaths[i]

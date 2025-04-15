@@ -7,6 +7,7 @@ import { NormalizedDirectoryStructure, NormalizedFileNode } from 'src/common/typ
 import { CHANNELS } from 'src/common/types/channel-names'
 import { readdirp } from 'readdirp'
 import { estimateTextTokens } from './token-estimator'
+import { fileTreeGeneratorService } from './file-tree-generator.service'
 
 class NormalizedFileMapService {
   private normalizedMap: Map<string, NormalizedFileNode> = new Map()
@@ -109,6 +110,21 @@ class NormalizedFileMapService {
       }
     }
     this.debouncedNotify()
+  }
+
+  public async getFileTree(): Promise<string> {
+    if (!this.root) {
+      return ''
+    }
+    // If the normalized map is empty, lazy initialize it
+    if (this.normalizedMap.size === 0) {
+      await this.buildNormalizedMap(this.root)
+    }
+    const structure: NormalizedDirectoryStructure = {
+      root: this.root,
+      map: Object.fromEntries(this.normalizedMap)
+    }
+    return fileTreeGeneratorService.generateFileTree(structure)
   }
 
   private async buildMapUsingReaddirp(dirPath: string, parentPath?: string): Promise<void> {
