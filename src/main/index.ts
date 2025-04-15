@@ -3,7 +3,6 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { removeIpcHandlers, setupIpcHandlers } from './ipc/ipc-handlers'
-import { installExtension, REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer'
 
 function createWindow(): void {
   // Create the browser window.
@@ -41,10 +40,6 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  installExtension([REACT_DEVELOPER_TOOLS, REACT_DEVELOPER_TOOLS])
-    .then((ext) => console.log(`Added Extension:  ${ext.map((it) => it.name).join(',')}`))
-    .catch((err) => console.log('An error occurred: ', err))
-
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 

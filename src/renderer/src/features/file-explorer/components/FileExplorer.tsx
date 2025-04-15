@@ -17,6 +17,7 @@ import {
   TooltipTrigger
 } from '@renderer/components/ui/tooltip'
 import { estimateTextTokens } from 'src/common/utils/token-estimator'
+import { formatTokenSize } from '@renderer/features/file-selection-preview/utils/formatTokenSize'
 
 export function FileExplorer() {
   const { rootPath, isLoading, openFileDialog } = useFileDialog()
@@ -90,7 +91,7 @@ export function FileExplorer() {
           .sendToClipboard(prompt)
           .then(() => {
             toast(
-              `Prompt generated with approximately ${estimatedTokens} tokens and copied to clipboard`,
+              `Prompt generated with approximately ${formatTokenSize(estimatedTokens)} tokens and copied to clipboard`,
               { action: { label: 'DISMISS', onClick: () => {} } }
             )
           })
