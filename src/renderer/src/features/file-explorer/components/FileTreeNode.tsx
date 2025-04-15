@@ -11,7 +11,6 @@ interface FileTreeNodeProps {
   level: number
   isSelected: CheckedState
   isExpanded: boolean
-  onToggleExpand: (event: React.MouseEvent) => void
   onCheckboxChange: (checked: boolean) => void
 }
 
@@ -20,17 +19,15 @@ export function FileTreeNode({
   level,
   isSelected,
   isExpanded,
-  onToggleExpand,
   onCheckboxChange
 }: FileTreeNodeProps) {
-  // Retrieve the normalized node data from the store
   const node = useAppStore((state) => state.entities[nodePath])
+  const toggleNodeExpansion = useAppStore((state) => state.toggleNodeExpansion)
 
   if (!node) {
     return null
   }
 
-  // Indentation based on level
   const indentStyle = {
     paddingLeft: `${level * 20}px`
   }
@@ -41,10 +38,11 @@ export function FileTreeNode({
 
   const handleNodeClick = (event: React.MouseEvent) => {
     event.stopPropagation()
+    // For directories: toggle expansion
     if (node.type === 'directory') {
-      onToggleExpand(event)
+      toggleNodeExpansion(nodePath)
     } else if (node.type === 'file') {
-      // Toggle checkbox state for files
+      // For files, toggle the checkbox
       onCheckboxChange(isSelected === 'indeterminate' || isSelected === false ? true : false)
     }
   }

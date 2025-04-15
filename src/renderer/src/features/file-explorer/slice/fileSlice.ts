@@ -6,33 +6,67 @@ import { CheckedNormalizedFileNode } from './type'
 export interface FileSlice {
   rootPath: string | null
   entities: { [path: string]: CheckedNormalizedFileNode }
-  initializeWithTreeRoot: (root: string, map: { [path: string]: NormalizedFileNode }) => void
+  /**
+   * Persist node expansions outside of local component state so that
+   * we can restore them after search is cleared.
+   */
+  expansions: { [path: string]: boolean }
+
+  initializeWithTreeRoot: (
+    root: string,
+    map: { [path: string]: NormalizedFileNode },
+    isInit: boolean
+  ) => void
   handleCheckboxChange: (nodePath: string, selected: boolean) => void
+  setNodeExpansion: (nodePath: string, expand: boolean) => void
+  toggleNodeExpansion: (nodePath: string) => void
+  bulkSetExpansions: (expansions: { [path: string]: boolean }) => void
 }
 
 export const createFileSlice: StateCreator<FileSlice, [], [], FileSlice> = (set) => ({
   rootPath: null,
   entities: {},
+  expansions: {},
 
   /**
    * Modified to merge existing selection states, rather than overwrite everything.
    * Newly added nodes default to `false`.
    * After merging, we recursively recalc directory selection states from children.
+   *
+   * Also ensure that any newly-added node expansions default to false.
    */
-  initializeWithTreeRoot: (root: string, map: { [path: string]: NormalizedFileNode }) => {
+  initializeWithTreeRoot: (
+    root: string,
+    map: { [path: string]: NormalizedFileNode },
+    isInit: boolean
+  ) => {
     set((state) => {
-      const oldEntities = state.entities
       const newEntities: { [path: string]: CheckedNormalizedFileNode } = {}
+      const newExpansions: { [path: string]: boolean } = {}
 
-      // Build the new entities map, preserving old selection where possible
-      for (const path in map) {
-        const oldNode = oldEntities[path]
-        const selected = oldNode ? oldNode.selected : false // default false for newly added
-        newEntities[path] = { ...map[path], selected }
+      if (isInit) {
+        // When initializing, ignore any existing data
+        for (const path in map) {
+          newEntities[path] = { ...map[path], selected: false } // default to false
+          newExpansions[path] = false
+        }
+      } else {
+        // Merge new data with existing state
+        const oldEntities = state.entities
+        const oldExpansions = state.expansions
+
+        // Build the new entities map, preserving old selection where possible
+        for (const path in map) {
+          const oldNode = oldEntities[path]
+          const selected = oldNode ? oldNode.selected : false // default false for newly added
+          newEntities[path] = { ...map[path], selected }
+
+          // Preserve old expansion state if exists; otherwise, default to false
+          newExpansions[path] = path in oldExpansions ? oldExpansions[path] : false
+        }
       }
 
       // Sort childPaths for directory nodes:
-      // Directories come before files and, within each type, they are sorted alphabetically.
       Object.keys(newEntities).forEach((path) => {
         const node = newEntities[path]
         if (node.type === 'directory' && node.childPaths && node.childPaths.length > 0) {
@@ -59,7 +93,8 @@ export const createFileSlice: StateCreator<FileSlice, [], [], FileSlice> = (set)
 
       return {
         rootPath: root,
-        entities: newEntities
+        entities: newEntities,
+        expansions: newExpansions
       }
     })
   },
@@ -83,15 +118,33 @@ export const createFileSlice: StateCreator<FileSlice, [], [], FileSlice> = (set)
       updateAncestors(entities, node.parentPath)
       return { entities }
     })
-  }
+  },
+
+  // New expansions actions
+  setNodeExpansion: (nodePath: string, expand: boolean) =>
+    set((state) => ({
+      expansions: {
+        ...state.expansions,
+        [nodePath]: expand
+      }
+    })),
+
+  toggleNodeExpansion: (nodePath: string) =>
+    set((state) => ({
+      expansions: {
+        ...state.expansions,
+        [nodePath]: !state.expansions[nodePath]
+      }
+    })),
+
+  bulkSetExpansions: (expansions) =>
+    set(() => ({
+      expansions
+    }))
 })
 
-/**
- * Recursively calculates the correct directory selection state based on its children.
- * - If all children are true → directory is `true`
- * - If all children are false → directory is `false`
- * - Otherwise → directory is `'indeterminate'`
- */
+// Helper functions (unchanged from original code, except for minimal formatting adjustments):
+
 function recalcDirectorySelection(
   nodePath: string,
   entities: { [path: string]: CheckedNormalizedFileNode }
@@ -133,9 +186,6 @@ function recalcDirectorySelection(
   return newSelection
 }
 
-/**
- * For toggling descendants when a directory changes state.
- */
 function updateDescendants(
   entities: { [path: string]: CheckedNormalizedFileNode },
   nodePath: string,
@@ -155,9 +205,6 @@ function updateDescendants(
   })
 }
 
-/**
- * For updating ancestors after an individual node changes state.
- */
 function updateAncestors(
   entities: { [path: string]: CheckedNormalizedFileNode },
   parentPath?: string

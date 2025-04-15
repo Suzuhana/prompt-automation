@@ -1,4 +1,4 @@
-import { FileDialog } from './features/file-explorer/components/FileDialog'
+import { FileExplorer } from './features/file-explorer/components/FileExplorer'
 import { useFileWatcherSubscription } from './features/file-watcher/hook/useFileWatcherSubscription'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './components/ui/resizable'
 import { FileSelectionPreview } from './features/file-selection-preview/components/FileSelectionPreview'
@@ -13,7 +13,7 @@ function App(): JSX.Element {
       <div className="flex h-screen bg-background text-foreground">
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel minSize={35} defaultSize={40} className="flex flex-col">
-            <FileDialog />
+            <FileExplorer />
           </ResizablePanel>
 
           <ResizableHandle />

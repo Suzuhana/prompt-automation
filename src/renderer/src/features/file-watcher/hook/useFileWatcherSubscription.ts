@@ -17,7 +17,7 @@ export function useFileWatcherSubscription() {
         console.groupEnd()
       })
       window.api.fileSystem.subscriptToNormalizedDirectoryChanged((data) => {
-        initializeWithTreeRoot(data.root, data.map)
+        initializeWithTreeRoot(data.root, data.map, false)
       })
     }
 

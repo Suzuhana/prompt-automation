@@ -32,7 +32,7 @@ export function useFileDialog() {
         const { root, map } = await window.api.fileSystem.getNormalizedDirectoryStructure(filePath)
         const newWatchId = await watchDirectory(filePath)
         setWatchId(newWatchId)
-        initializeWithTreeRoot(root, map)
+        initializeWithTreeRoot(root, map, true)
         // Removed setSelectedFiles as selection is now part of the normalized tree
       }
     } catch (error) {

@@ -1,38 +1,35 @@
-import React, { useState, useCallback } from 'react'
 import { FileTreeNode } from './FileTreeNode'
 import { useAppStore } from '@renderer/store'
 
 interface FileTreeProps {
   nodePath: string
   level?: number
+  allowedNodePaths?: Set<string>
+  hasActiveSearch?: boolean
 }
 
-export function FileTree({ nodePath, level = 0 }: FileTreeProps) {
-  // Access the node data via store's normalized entities
+export function FileTree({
+  nodePath,
+  level = 0,
+  allowedNodePaths,
+  hasActiveSearch
+}: FileTreeProps) {
   const node = useAppStore((state) => state.entities[nodePath])
+  const expansions = useAppStore((state) => state.expansions)
   const handleCheckboxChange = useAppStore((state) => state.handleCheckboxChange)
 
-  // Local expansion state
-  const [isExpanded, setIsExpanded] = useState(level < 1)
-
-  // Use the selection state from the normalized node
-  const isSelected = node?.selected ?? false
-
-  // Toggle expand/collapse only if it's a directory
-  const handleToggleExpand = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      if (node?.type === 'directory') {
-        setIsExpanded((prev) => !prev)
-      }
-    },
-    [node?.type]
-  )
-
   if (!node) {
-    // If there's no entity in the store for this path, render nothing
     return null
   }
+
+  // If allowedNodePaths is given, skip rendering nodes not in it
+  if (allowedNodePaths && !allowedNodePaths.has(nodePath)) {
+    return null
+  }
+
+  // Now we read the expansion state from the store:
+  const isExpanded = expansions[nodePath] ?? false
+  const isSelected = node.selected ?? false
 
   return (
     <div role="tree" aria-label="File navigator">
@@ -41,14 +38,18 @@ export function FileTree({ nodePath, level = 0 }: FileTreeProps) {
         level={level}
         isSelected={isSelected}
         isExpanded={isExpanded}
-        onToggleExpand={handleToggleExpand}
         onCheckboxChange={(checked) => handleCheckboxChange(nodePath, checked)}
       />
-
       {isExpanded && node.type === 'directory' && node.childPaths && node.childPaths.length > 0 && (
         <div role="group">
           {node.childPaths.map((childPath) => (
-            <FileTree key={childPath} nodePath={childPath} level={level + 1} />
+            <FileTree
+              key={childPath}
+              nodePath={childPath}
+              level={level + 1}
+              allowedNodePaths={allowedNodePaths}
+              hasActiveSearch={hasActiveSearch}
+            />
           ))}
         </div>
       )}

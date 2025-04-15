@@ -1,6 +1,7 @@
 import * as path from 'path'
 import { readFilesAsStrings } from './file-reader.service'
-import { CreatePromptRequest } from 'src/common/types/prompt-types'
+import { CreatePromptRequest, Prompt } from 'src/common/types/prompt-types'
+import { fileBasedStoreService } from './file-based-store.service'
 
 /**
  * Service responsible for assembling prompt content.
@@ -10,7 +11,8 @@ export const promptGeneratorService = {
   /**
    * Creates a prompt consisting of:
    * 1. <file_contents> section (for each file in selectedFilePaths)
-   * 2. <user_instructions> section (from user input)
+   * 2. <prompts> section (reads Prompt[] from file-backed store)
+   * 3. <user_instructions> section (from user input)
    */
   async createPrompt(request: CreatePromptRequest): Promise<string> {
     // Step 1: Read all selected files
@@ -22,19 +24,30 @@ export const promptGeneratorService = {
     for (let i = 0; i < request.selectedFilePaths.length; i++) {
       const filePath = request.selectedFilePaths[i]
       const fileContent = filesMap[filePath] ?? ''
-      // Derive extension (strip leading dot)
       const extension = path.extname(filePath).replace(/^\./, '') || ''
       promptSections.push(`File: ${filePath}`)
       promptSections.push('```' + extension)
       promptSections.push(fileContent)
       promptSections.push('```')
-      // Only add a blank line if this is not the last file
       if (i < request.selectedFilePaths.length - 1) {
-        promptSections.push('') // Blank line for readability
+        promptSections.push('')
       }
     }
     promptSections.push('</file_contents>')
-    promptSections.push('') // Blank line to separate sections
+    promptSections.push('') // Blank line for separation
+
+    // Step 2.5: Append the prompts section from the file-backed store
+    const storedPrompts = fileBasedStoreService.get('prompts') as Prompt[] | undefined
+    if (storedPrompts && Array.isArray(storedPrompts) && storedPrompts.length > 0) {
+      promptSections.push('<prompts>')
+      for (const prompt of storedPrompts) {
+        promptSections.push(`<prompt type="${prompt.type}" name="${prompt.name}">`)
+        promptSections.push(prompt.content)
+        promptSections.push('</prompt>')
+      }
+      promptSections.push('</prompts>')
+      promptSections.push('') // Blank line for separation
+    }
 
     // Step 3: Append user instructions
     promptSections.push('<user_instructions>')
