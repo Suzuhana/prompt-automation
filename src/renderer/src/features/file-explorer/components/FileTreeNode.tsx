@@ -49,7 +49,7 @@ export function FileTreeNode({
 
   return (
     <div
-      className="flex items-center py-1 hover:bg-gray-50 rounded cursor-pointer group"
+      className="flex items-center py-1 hover:bg-gray-100 rounded cursor-pointer group"
       onClick={handleNodeClick}
       style={indentStyle}
       role="treeitem"

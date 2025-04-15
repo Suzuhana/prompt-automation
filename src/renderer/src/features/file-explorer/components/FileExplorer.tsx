@@ -8,7 +8,7 @@ import { FileTree } from './FileTree'
 import { useFileDialog } from '../hook/useFileDialog'
 import { useAppStore } from '@renderer/store'
 import { useFileSearch } from '../hook/useFileSearch'
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { Toggle } from '@/components/ui/toggle'
 import {
   Tooltip,
@@ -119,27 +119,33 @@ export function FileExplorer() {
           <Input
             type="text"
             placeholder="Search..."
-            className="pl-10 pr-12 py-1 rounded text-sm w-full"
+            className="pl-10 pr-28 py-1 rounded text-sm w-full" // Increased right padding for buttons container
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Toggle
-                  className="absolute right-0.5 top-1/2 transform -translate-y-1/2"
-                  size={'sm'}
-                  pressed={fuzzySearch}
-                  onClick={() => setFuzzySearch((prev) => !prev)}
-                >
-                  F
-                </Toggle>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle fuzzy search</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="absolute right-0.5 top-1/2 transform -translate-y-1/2 flex items-center">
+            {searchQuery.trim().length > 0 && (
+              <Button variant="ghost" onClick={() => setSearchQuery('')} size={'sm'}>
+                <X size={8} className="text-gray-500" />
+              </Button>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    size={'sm'}
+                    pressed={fuzzySearch}
+                    onClick={() => setFuzzySearch((prev) => !prev)}
+                  >
+                    F
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle fuzzy search</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
 
