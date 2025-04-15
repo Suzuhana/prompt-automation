@@ -6,8 +6,8 @@ import { BrowserWindow } from 'electron'
 import { NormalizedDirectoryStructure, NormalizedFileNode } from 'src/common/types/file-tree-types'
 import { CHANNELS } from 'src/common/types/channel-names'
 import { readdirp } from 'readdirp'
-import { estimateTextTokens } from './token-estimator'
 import { fileTreeGeneratorService } from './file-tree-generator.service'
+import { estimateTextTokens } from 'src/common/utils/token-estimator'
 
 class NormalizedFileMapService {
   private normalizedMap: Map<string, NormalizedFileNode> = new Map()

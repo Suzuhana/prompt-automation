@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from '@renderer/components/ui/tooltip'
+import { estimateTextTokens } from 'src/common/utils/token-estimator'
 
 export function FileExplorer() {
   const { rootPath, isLoading, openFileDialog } = useFileDialog()
@@ -84,12 +85,14 @@ export function FileExplorer() {
         userInstruction: instructions.trim()
       })
       .then((prompt) => {
+        const estimatedTokens = estimateTextTokens(prompt)
         window.api.clipboard
           .sendToClipboard(prompt)
           .then(() => {
-            toast('Prompt generated and copied to clipboard', {
-              action: { label: 'DISMISS', onClick: () => {} }
-            })
+            toast(
+              `Prompt generated with approximately ${estimatedTokens} tokens and copied to clipboard`,
+              { action: { label: 'DISMISS', onClick: () => {} } }
+            )
           })
           .catch((err) => {
             console.error('Error sending prompt to clipboard:', err)
