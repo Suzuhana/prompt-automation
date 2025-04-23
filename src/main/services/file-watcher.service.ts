@@ -1,5 +1,5 @@
 // main/services/file-watcher.service.ts
-import watcher from '@parcel/watcher'
+import watcher, { BackendType } from '@parcel/watcher'
 import { WatcherEvent, WatcherSubscription } from 'src/common/types/file-watcher-types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -22,6 +22,14 @@ export const FileWatcherService = {
     directory: string,
     eventCallback: (events: WatcherEvent[]) => void
   ): Promise<string> {
+    // Build subscribe options with conditional backend
+    const options: { ignore: string[]; backend?: BackendType } = {
+      ignore: ['node_modules']
+    }
+    if (process.platform === 'win32') {
+      options.backend = 'windows'
+    }
+
     // Subscribe to changes using @parcel/watcher
     const subscription = await watcher.subscribe(
       directory,
@@ -30,10 +38,10 @@ export const FileWatcherService = {
           console.error(`Error watching ${directory}:`, err)
           return
         }
-        // Forward the events using the provided callback.
+        // Forward the events using the provided callback
         eventCallback(events)
       },
-      { ignore: ['node_modules'] }
+      options
     )
 
     const watchId = uuidv4()
