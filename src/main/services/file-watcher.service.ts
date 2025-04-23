@@ -23,14 +23,18 @@ export const FileWatcherService = {
     eventCallback: (events: WatcherEvent[]) => void
   ): Promise<string> {
     // Subscribe to changes using @parcel/watcher
-    const subscription = await watcher.subscribe(directory, (err, events) => {
-      if (err) {
-        console.error(`Error watching ${directory}:`, err)
-        return
-      }
-      // Forward the events using the provided callback.
-      eventCallback(events)
-    })
+    const subscription = await watcher.subscribe(
+      directory,
+      (err, events) => {
+        if (err) {
+          console.error(`Error watching ${directory}:`, err)
+          return
+        }
+        // Forward the events using the provided callback.
+        eventCallback(events)
+      },
+      { ignore: ['node_modules'] }
+    )
 
     const watchId = uuidv4()
     activeWatchers.set(watchId, { directory, subscription })
