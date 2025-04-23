@@ -9,6 +9,7 @@ export function usePrompts() {
   const addPrompt = useAppStore((state) => state.addPrompt)
   const removePrompt = useAppStore((state) => state.removePrompt)
   const editPrompt = useAppStore((state) => state.editPrompt)
+  const togglePromptEnabled = useAppStore((state) => state.togglePromptEnabled)
 
   const promptDialogRef = useRef<PromptDialogHandle>(null)
 
@@ -48,6 +49,7 @@ export function usePrompts() {
     promptDialogRef,
     openDialog,
     handleSavePrompt,
-    removePrompt
+    removePrompt,
+    togglePromptEnabled
   }
 }

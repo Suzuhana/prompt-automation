@@ -7,4 +7,5 @@ export interface Prompt {
   name: string
   type: string
   content: string
+  enabled: boolean
 }
