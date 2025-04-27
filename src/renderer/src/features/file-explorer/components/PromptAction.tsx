@@ -37,12 +37,9 @@ export function PromptAction({ entities, instructions }: PromptActionProps) {
       .catch((err) => console.error('Error generating prompt:', err))
   }, [entities, instructions])
 
-  const selectedCount = Object.values(entities).filter((node) => node.selected).length
-  if (selectedCount === 0) return null
-
   return (
     <div className="mt-auto flex justify-end">
-      <Button onClick={handlePromptGeneration}>Prompt Generation ({selectedCount})</Button>
+      <Button onClick={handlePromptGeneration}>Prompt Generation</Button>
     </div>
   )
 }
