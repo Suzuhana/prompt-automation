@@ -71,7 +71,7 @@ export function DirectorySelector({ openFileDialog, isLoading }: DirectorySelect
               </div>
 
               <ScrollArea className="h-80 rounded-md border p-2">
-                <div className="space-y-2 pr-3">
+                <div className="space-y-2">
                   {/* Mock patterns - would be replaced with actual filtered data */}
                   {[
                     'node_modules/**',

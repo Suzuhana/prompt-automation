@@ -9,6 +9,8 @@
     "src/common/**/*"
 , "src/preload/preload-api.types.ts"  ],
   "compilerOptions": {
+    "target": "ES2015",
+    "downlevelIteration": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "typeRoots": ["./node_modules/@types"],
     "composite": true,

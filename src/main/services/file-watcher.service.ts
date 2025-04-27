@@ -65,8 +65,9 @@ export const FileWatcherService = {
    * Remove all active watchers.
    */
   async removeAllWatchers(): Promise<void> {
-    for (const [, watcher] of activeWatchers.entries()) {
-      await watcher.subscription.unsubscribe()
+    // Iterate over each ActiveWatcher in the map
+    for (const activeWatcher of activeWatchers.values()) {
+      await activeWatcher.subscription.unsubscribe()
     }
     activeWatchers.clear()
   }
