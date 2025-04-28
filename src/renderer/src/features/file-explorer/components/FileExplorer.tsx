@@ -49,7 +49,7 @@ export function FileExplorer() {
   }, [searchQuery, allowedNodePaths, entities, expansions, bulkSetExpansions])
 
   return (
-    <div className="flex flex-col h-full w-full p-4 gap-1">
+    <div className="flex flex-col h-full w-full p-2 gap-1">
       <DirectorySelector
         openFileDialog={openFileDialog}
         isLoading={isLoading}
@@ -70,7 +70,7 @@ export function FileExplorer() {
       )}
 
       {rootPath && !isLoading && (
-        <ScrollArea className="flex-grow min-h-0 border rounded-md bg-gray-50/30 dark:bg-gray-800/20">
+        <ScrollArea className="flex-grow min-h-0 border mb-1 rounded-md bg-gray-50/30 dark:bg-gray-800/20">
           <div className="p-4">
             <FileTree
               nodePath={rootPath}
