@@ -2,6 +2,7 @@
 import watcher, { BackendType } from '@parcel/watcher'
 import { WatcherEvent, WatcherSubscription } from 'src/common/types/file-watcher-types'
 import { v4 as uuidv4 } from 'uuid'
+import { fileBasedStoreService } from './file-based-store.service'
 
 interface ActiveWatcher {
   directory: string
@@ -22,14 +23,17 @@ export const FileWatcherService = {
     directory: string,
     eventCallback: (events: WatcherEvent[]) => void
   ): Promise<string> {
+    // Resolve ignore patterns from the store; fall back to a sensible default
+    const storedPatterns = fileBasedStoreService.get('ignorePatterns')
+    const ignorePatterns: string[] =
+      Array.isArray(storedPatterns) && storedPatterns.length
+        ? (storedPatterns as string[])
+        : ['node_modules']
+
     // Build subscribe options with conditional backend
     const options: { ignore: string[]; backend?: BackendType } = {
-      ignore: ['node_modules']
+      ignore: ignorePatterns
     }
-    if (process.platform === 'win32') {
-      options.backend = 'windows'
-    }
-
     // Subscribe to changes using @parcel/watcher
     const subscription = await watcher.subscribe(
       directory,

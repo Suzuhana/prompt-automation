@@ -8,15 +8,20 @@ import {
   createInstructionSlice,
   InstructionSlice
 } from '@renderer/features/instruction/slice/instructionSlice'
+import {
+  createIgnorePatternsSlice,
+  IgnorePatternsSlice
+} from '@renderer/features/file-explorer/slice/ignorePatternsSlice'
 
-export type AppState = FileSlice & InstructionSlice
+export type AppState = FileSlice & InstructionSlice & IgnorePatternsSlice
 
 export const useAppStore = create<AppState>()(
   devtools(
     logger(
       actionLogger((set, get, api) => ({
         ...createFileSlice(set, get, api),
-        ...createInstructionSlice(set, get, api)
+        ...createInstructionSlice(set, get, api),
+        ...createIgnorePatternsSlice(set, get, api)
       }))
     ),
     {

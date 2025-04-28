@@ -23,17 +23,7 @@ export function useFileDialog() {
       })
 
       if (filePath) {
-        setIsLoading(true)
-
-        if (watchId != null) {
-          await stopWatchDirectory(watchId)
-        }
-
-        const { root, map } = await window.api.fileSystem.getNormalizedDirectoryStructure(filePath)
-        const newWatchId = await watchDirectory(filePath)
-        setWatchId(newWatchId)
-        initializeWithTreeRoot(root, map, true)
-        // Removed setSelectedFiles as selection is now part of the normalized tree
+        await loadWithPath(filePath)
       }
     } catch (error) {
       console.error('Error opening file dialog:', error)
@@ -42,9 +32,31 @@ export function useFileDialog() {
     }
   }
 
+  async function loadWithPath(filePath: string) {
+    // show loading spinner
+    setIsLoading(true)
+
+    // stop watching previous directory if any
+    if (watchId != null) {
+      await stopWatchDirectory(watchId)
+    }
+
+    // get normalized directory structure for the selected path
+    const { root, map } = await window.api.fileSystem.getNormalizedDirectoryStructure(filePath)
+
+    // start watching the new directory
+    const newWatchId = await watchDirectory(filePath)
+    setWatchId(newWatchId)
+
+    // initialize the file tree in the UI
+    initializeWithTreeRoot(root, map, true)
+    setIsLoading(false)
+  }
+
   return {
     rootPath,
     isLoading,
-    openFileDialog
+    openFileDialog,
+    loadWithPath
   }
 }

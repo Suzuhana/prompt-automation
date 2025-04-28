@@ -10,7 +10,7 @@ import { PromptAction } from './PromptAction'
 import { NormalizedFileNode } from 'src/common/types/file-tree-types'
 
 export function FileExplorer() {
-  const { rootPath, isLoading, openFileDialog } = useFileDialog()
+  const { rootPath, isLoading, openFileDialog, loadWithPath } = useFileDialog()
   const entities = useAppStore((state) => state.entities)
   const instructions = useAppStore((state) => state.instructions)
   const expansions = useAppStore((state) => state.expansions)
@@ -50,7 +50,11 @@ export function FileExplorer() {
 
   return (
     <div className="flex flex-col h-full w-full p-4 gap-1">
-      <DirectorySelector openFileDialog={openFileDialog} isLoading={isLoading} />
+      <DirectorySelector
+        openFileDialog={openFileDialog}
+        isLoading={isLoading}
+        loadWithPath={loadWithPath}
+      />
 
       <SearchBar
         searchQuery={searchQuery}

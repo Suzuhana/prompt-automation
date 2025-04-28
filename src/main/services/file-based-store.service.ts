@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import * as fs from 'fs/promises'
 import * as path from 'path'
+import defaultConfig from './defaultConfig.json'
 
 /**
  * A simple file-based key-value store service
@@ -37,15 +38,17 @@ class FileBasedStoreService {
       const raw = await fs.readFile(this.storeFilePath, 'utf8')
       this.data = JSON.parse(raw)
     } catch (error: unknown) {
-      // Narrow the error to NodeJS.ErrnoException so we can check the code property
       const err = error as NodeJS.ErrnoException
-      if (err.code !== 'ENOENT') {
+      if (err.code === 'ENOENT') {
+        // Store file not found: initialize with defaults and write them out
+        this.data = defaultConfig as Record<string, unknown>
+        await this.saveToDisk()
+      } else {
         console.error('Error reading store file:', err)
+        this.data = {}
       }
-      this.data = {}
     }
   }
-
   /**
    * Get a value from the store by key.
    */

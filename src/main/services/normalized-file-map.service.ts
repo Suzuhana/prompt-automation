@@ -8,6 +8,8 @@ import { CHANNELS } from 'src/common/types/channel-names'
 import { readdirp } from 'readdirp'
 import { fileTreeGeneratorService } from './file-tree-generator.service'
 import { estimateTextTokens } from 'src/common/utils/token-estimator'
+import { fileBasedStoreService } from './file-based-store.service'
+import { Minimatch } from 'minimatch'
 
 class NormalizedFileMapService {
   private normalizedMap: Map<string, NormalizedFileNode> = new Map()
@@ -17,7 +19,7 @@ class NormalizedFileMapService {
 
   public async buildNormalizedMap(dirPath: string): Promise<NormalizedDirectoryStructure> {
     this.normalizedMap.clear()
-    await this.loadIgnorePatterns(dirPath)
+    await this.loadIgnorePatterns()
     this.root = dirPath || null
 
     await this.buildMapUsingReaddirp(dirPath)
@@ -227,31 +229,53 @@ class NormalizedFileMapService {
     return fileNode
   }
 
-  private async loadIgnorePatterns(dirPath: string): Promise<void> {
+  /**
+   * Populate `ignoredPatterns` from the persisted user configuration.
+   * Patterns may be absolute paths or glob expressions and are normalised
+   * to POSIX style so that glob matching behaves consistently on every OS.
+   *
+   * Note: any repository-specific ignores (e.g. .git, .gitignore contents)
+   * will be supplied by the single store config elsewhere.
+   */
+  private async loadIgnorePatterns(): Promise<void> {
     try {
-      const gitignorePath = path.join(dirPath, '.gitignore')
-      const data = await fs.readFile(gitignorePath, 'utf8')
-      const lines = data.split('\n')
-      this.ignoredPatterns = lines
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'))
-        .concat(['.git'])
+      const stored = fileBasedStoreService.get('ignorePatterns')
+
+      if (Array.isArray(stored)) {
+        // Keep only non-empty string patterns and convert “\” → “/”
+        this.ignoredPatterns = (stored as unknown[])
+          .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+          .map((p) => p.replace(/\\/g, '/'))
+      } else {
+        this.ignoredPatterns = []
+      }
     } catch {
       this.ignoredPatterns = []
     }
   }
 
+  /**
+   * Check whether a file or directory should be ignored.
+   * Uses `glob`/`Minimatch` so both simple paths and complex glob
+   * patterns are supported
+   */
   private isIgnored(targetPath: string): boolean {
-    if (!this.root) {
+    if (!this.root || this.ignoredPatterns.length === 0) {
       return false
     }
+
+    // Convert to a POSIX-style relative path for reliable matching
     const relativePath = path.relative(this.root, targetPath).replace(/\\/g, '/')
+
     return this.ignoredPatterns.some((pattern) => {
-      const normalizedPattern = pattern.replace(/^\/+|\/+$/g, '')
-      return relativePath.includes(normalizedPattern)
+      const matcher = new Minimatch(pattern, {
+        dot: true, // match files starting with "."
+        matchBase: true, // allow basename matches like "node_modules"
+        nocase: process.platform === 'win32' // case-insensitive on Windows
+      })
+      return matcher.match(relativePath)
     })
   }
-
   private debouncedNotify(delay = 500) {
     if (this.notifyTimeout) {
       clearTimeout(this.notifyTimeout)
